@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.ucenter.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.ucenter.model.po.User">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userAccount" column="user_account" jdbcType="VARCHAR"/>
+            <result property="userPassword" column="user_password" jdbcType="VARCHAR"/>
+            <result property="member" column="member" jdbcType="VARCHAR"/>
+        <result property="qualification" column="qualification" jdbcType="VARCHAR"/>
+        <result property="grade" column="grade" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="roleId" column="role_id" jdbcType="VARCHAR"/>
+            <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+            <result property="userAvatar" column="user_avatar" javaType="java.sql.Blob" jdbcType="BLOB" typeHandler="org.apache.ibatis.type.BlobTypeHandler"/>
+            <result property="userRole" column="user_role" jdbcType="VARCHAR" typeHandler="org.apache.ibatis.type.EnumTypeHandler" />
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="isPoint" column="is_point" jdbcType="TINYINT"/>
+            <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
+            <result property="isEnable" column="is_enable" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_account,user_password,
+        email,user_name,user_avatar,member,qualification,grade,
+        user_role,create_time,update_time,is_point,role_id,
+        is_delete,is_enable
+    </sql>
+
+    <select id="findByEmail" resultType="com.kimo.ucenter.model.po.User">
+        select *
+        from user
+        where email = #{username}
+    </select>
+
+    <insert id="insertUser" parameterType="com.kimo.ucenter.model.po.User">
+        INSERT INTO user (id, user_avatar,user_password,email,user_account)
+        VALUES (#{id},#{userAvatar},#{userPassword},#{email},#{userAccount})
+    </insert>
+</mapper>

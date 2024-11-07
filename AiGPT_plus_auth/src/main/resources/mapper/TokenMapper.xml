@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.ucenter.mapper.TokenMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.ucenter.model.po.Token">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="token" column="token" jdbcType="VARCHAR"/>
+            <result property="revoked" column="revoked" jdbcType="TINYINT"/>
+            <result property="expired" column="expired" jdbcType="TINYINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,token,revoked,
+        expired,user_id
+    </sql>
+
+
+    <select id="findByToken" resultType="com.kimo.ucenter.model.po.Token">
+        select *
+        from token
+        where token = #{jwt}
+    </select>
+
+    <select id="findAllValidTokenByUser" resultType="com.kimo.ucenter.model.po.Token">
+        select t.*
+        from token t
+                 inner join user u on t.user_id = u.id -- 假设Token表中有一个user_id字段与User表的id字段关联
+        where u.id = #{id} and (t.expired = 0 or t.revoked = 0) -- 假设expired和revoked字段是布尔类型，在数据库中存储为0或1
+    </select>
+</mapper>

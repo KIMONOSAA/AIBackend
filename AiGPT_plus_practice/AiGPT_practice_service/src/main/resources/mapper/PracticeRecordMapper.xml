@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.PracticeRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.po.PracticeRecord">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="courseId" column="course_id" jdbcType="BIGINT"/>
+            <result property="teachplanId" column="teachplan_id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="userRight" column="user_right" jdbcType="INTEGER"/>
+            <result property="userError" column="user_error" jdbcType="INTEGER"/>
+            <result property="practiceStatus" column="practice_status" jdbcType="VARCHAR"/>
+            <result property="airesult" column="airesult" jdbcType="VARCHAR"/>
+            <result property="subjects" column="subjects" jdbcType="VARCHAR"/>
+            <result property="practicePoint" column="practice_point" jdbcType="DOUBLE"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+            <result property="qualifications" column="qualifications" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,course_id,user_id,
+        user_right,user_error,practice_status,teachplan_id,
+        airesult,subjects,practice_point,
+        create_time,end_time,qualifications
+    </sql>
+</mapper>

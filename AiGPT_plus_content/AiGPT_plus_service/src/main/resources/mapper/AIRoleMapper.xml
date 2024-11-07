@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.AIRoleMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.entity.AIRole">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="AIRole" column="AIRole" jdbcType="VARCHAR"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="AIMax_Tokens" column="AIMax_Tokens" jdbcType="INTEGER"/>
+            <result property="AIRoleReview" column="AIRoleReview" jdbcType="INTEGER"/>
+            <result property="AIDescription" column="AIDescription" jdbcType="VARCHAR"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,AIRole,AIDescription,userId,
+        createTime,updateTime,isDelete,
+        status,
+        AIMax_Tokens,AIRoleReview
+    </sql>
+
+    <select id="findAIRoleById" resultType="com.kimo.model.entity.AIRole">
+        select * from airole where id = #{id}
+    </select>
+</mapper>

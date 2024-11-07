@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.OrdersRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.po.OrdersRecord">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="payNo" column="pay_no" jdbcType="BIGINT"/>
+            <result property="outPayNo" column="out_pay_no" jdbcType="VARCHAR"/>
+            <result property="outPayChannel" column="out_pay_channel" jdbcType="VARCHAR"/>
+            <result property="orderId" column="order_id" jdbcType="BIGINT"/>
+            <result property="orderName" column="order_name" jdbcType="VARCHAR"/>
+            <result property="totalPrice" column="total_price" jdbcType="BIGINT"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="VARCHAR"/>
+            <result property="paySuccessTime" column="pay_success_time" jdbcType="TIMESTAMP"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,pay_no,out_pay_no,order_name,
+        out_pay_channel,order_id,total_price,
+        create_time,status,pay_success_time,
+        user_id
+    </sql>
+</mapper>

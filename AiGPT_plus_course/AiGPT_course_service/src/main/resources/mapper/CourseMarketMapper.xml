@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.CourseMarketMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.po.CourseMarket">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="charge" column="charge" jdbcType="VARCHAR"/>
+            <result property="memberPrice" column="member_price" jdbcType="FLOAT"/>
+            <result property="qq" column="qq" jdbcType="VARCHAR"/>
+            <result property="wechat" column="wechat" jdbcType="VARCHAR"/>
+            <result property="phone" column="phone" jdbcType="VARCHAR"/>
+            <result property="validDays" column="valid_days" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,charge,member_price,qq,
+        wechat,phone,valid_days
+    </sql>
+
+    <select id="getCourseMarketCount" resultType="int">
+        SELECT COUNT(*) FROM course_market
+    </select>
+
+    <select id="getCourseMarketListByPage" resultType="com.kimo.model.po.CourseMarket">
+        SELECT *
+        FROM course_market
+                 LIMIT #{page}, #{size}
+    </select>
+</mapper>

@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: auth
+  config:
+    import:
+      - nacos:auth-dev.yaml
+      - nacos:knife4j-dev.yaml
+  cloud:
+
+    nacos:
+      server-addr: 192.168.101.132:8848
+      discovery:
+        namespace: devAI_plus
+        group: aigpt-plus-project
+      config:
+        namespace: devAI_plus
+        group: aigpt-plus-project
+        file-extension: yaml
+        refresh-enabled: true
+        shared-configs:
+          - data-id: knife4j-dev.yaml
+            group: aigpt-plus-common
+            refresh: true
+#    profiles默认为dev
+#    profiles:
+#      active: dev
+logging:
+  level:
+    org.springframework: DEBUG

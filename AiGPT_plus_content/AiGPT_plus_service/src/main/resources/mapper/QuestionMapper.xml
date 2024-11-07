@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.QuestionMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.entity.Question">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="subjects" column="subjects" jdbcType="VARCHAR"/>
+            <result property="subjectsTitle" column="subjectsTitle" jdbcType="VARCHAR"/>
+            <result property="optionA" column="choices" jdbcType="VARCHAR"/>
+            <result property="optionB" column="choices" jdbcType="VARCHAR"/>
+            <result property="optionC" column="choices" jdbcType="VARCHAR"/>
+            <result property="optionD" column="choices" jdbcType="VARCHAR"/>
+            <result property="page" column="page" jdbcType="INTEGER"/>
+            <result property="subjectsResult" column="subjectsResult" jdbcType="VARCHAR"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,subjects,subjectsTitle,
+        optionA,optionB,optionC,optionD,page,subjectsResult,
+        createTime,updateTime,isDelete
+    </sql>
+</mapper>

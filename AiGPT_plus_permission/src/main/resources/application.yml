@@ -1,0 +1,32 @@
+spring:
+  config:
+    import: optional:bootstrap.yml
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    tags-sorter: alpha
+#    operations-sorter: alpha
+#  api-docs:
+#    path: /v3/api-docs
+#  group-configs:
+#    - group: 'kimo'
+#      paths-to-match: '/**'
+#      packages-to-scan: com.kimo.controller
+#
+#
+#knife4j:
+#  enable: true
+#  production: false
+#  basic:
+#    enable: false
+#    username: kimo
+#    password: zgs50809701314
+#  setting:
+#    language: zh_cn
+#    enable-version: true
+#    enable-swagger-models: true
+#    swagger-model-name: 用户模块
+#
+#mybatis-plus:
+#  configuration:
+#    map-underscore-to-camel-case: false

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.AnswerMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.entity.Answer">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="questionId" column="questionId" jdbcType="BIGINT"/>
+            <result property="userSubjects" column="userSubjects" jdbcType="VARCHAR"/>
+            <result property="userRight" column="userRight" jdbcType="BIGINT"/>
+            <result property="userWrong" column="userWrong" jdbcType="BIGINT"/>
+            <result property="userResult" column="userResult" jdbcType="DECIMAL"/>
+            <result property="aiBody" column="aiBody" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="VARCHAR"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,userId,userSubjects,questionId,
+        userRight,userWrong,userResult,
+        aiBody,status,createTime,
+        updateTime,isDelete
+    </sql>
+</mapper>

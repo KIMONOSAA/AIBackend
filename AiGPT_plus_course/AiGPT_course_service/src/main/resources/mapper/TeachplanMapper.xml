@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.TeachplanMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.po.Teachplan">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="pname" column="pname" jdbcType="VARCHAR"/>
+            <result property="grade" column="grade" jdbcType="SMALLINT"/>
+            <result property="mediaType" column="media_type" jdbcType="VARCHAR"/>
+            <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+            <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="label" column="label" jdbcType="VARCHAR"/>
+            <result property="timelength" column="timelength" jdbcType="VARCHAR"/>
+            <result property="totalTime" column="total_time" jdbcType="VARCHAR"/>
+            <result property="orderby" column="orderby" jdbcType="INTEGER"/>
+            <result property="courseId" column="course_id" jdbcType="BIGINT"/>
+            <result property="practiceId" column="practice_id" jdbcType="BIGINT"/>
+            <result property="coursePubId" column="course_pub_id" jdbcType="BIGINT"/>
+            <result property="status" column="status" jdbcType="INTEGER"/>
+            <result property="isPreview" column="is_preview" jdbcType="CHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="changeDate" column="change_date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+<!--    <resultMap id="TeachPlanTreeNodeMap" type="com.kimo.model.dto.TeachplanListDto">-->
+<!--        <id     column="two_id"        property="id" />-->
+<!--        <result column="two_pname"      property="pname" />-->
+<!--        <result column="two_mediaType"   property="media_type" />-->
+<!--        <result column="two_stratTime"   property="create_time" />-->
+<!--        <result column="two_endTime"   property="update_time" />-->
+<!--        <result column="two_orderby"   property="orderby" />-->
+<!--        <result column="two_courseId"   property="course_id" />-->
+<!--        <result column="two_coursePubId"   property="course_pub_id" />-->
+<!--        <association property="teachplanMedia" javaType="com.kimo.model.po.TeachplanMedia">-->
+<!--            <result column="teachplanMeidaId"   property="id" />-->
+<!--            <result column="mediaFilename"   property="media_fileName" />-->
+<!--            <result column="mediaId"   property="media_id" />-->
+<!--        </association>-->
+<!--    </resultMap>-->
+    <resultMap id="TeachPlanTreeNodeMap" type="com.kimo.model.dto.TeachplanListDto">
+        <id property="id" column="id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="timelength" column="timelength"/>
+        <result property="status" column="status"/>
+        <result property="label" column="label"/>
+        <result property="createDate" column="create_date"/>
+        <result property="changeDate" column="change_date"/>
+        <result property="coursePubId" column="course_pub_id"/>
+        <result property="description" column="description"/>
+        <result property="pname" column="pname"/>
+        <result property="mediaType" column="media_type"/>
+        <result property="orderby" column="orderby"/>
+        <association property="teachplanMedia" javaType="com.kimo.model.po.TeachplanMedia">
+            <id property="id" column="media_id"/>
+            <result property="courseId" column="media_course_id"/>
+            <result property="mediaFileName" column="media_file_name"/>
+            <result property="mediaId" column="media_media_id"/>
+            <result property="teachplanId" column="media_teachplan_id"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,pname,
+        grade,media_type,start_time,
+        end_time,description,timelength,
+        orderby,course_id,course_pub_id,total_time,
+        status,is_preview,create_date,practice_id,label,
+        change_date
+    </sql>
+
+    <select id="getTeachPlanTreeNodeById" resultMap="TeachPlanTreeNodeMap">
+        select
+            tp.id,
+            tp.course_id,
+            tp.pname,
+            tp.media_type,
+            tp.orderby,
+            tp.description,
+            tp.timelength,
+            tp.status,
+            tp.label,
+            tp.create_date,
+            tp.change_date,
+            tp.course_pub_id,
+            tm.id AS media_id,
+            tm.course_id AS media_course_id,
+            tm.media_file_name AS media_file_name,
+            tm.media_id AS media_media_id,
+            tm.teachplan_id AS media_teachplan_id
+        from teachplan tp
+                 LEFT JOIN teachplan_media tm ON tp.id = tm.teachplan_id
+        where tp.course_id = #{id}
+        order by tp.orderby
+    </select>
+</mapper>

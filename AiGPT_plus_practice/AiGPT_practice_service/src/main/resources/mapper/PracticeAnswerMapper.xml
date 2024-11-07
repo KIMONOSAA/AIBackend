@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.PracticeAnswerMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.po.PracticeAnswer">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="questionId" column="question_id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="courseId" column="course_id" jdbcType="BIGINT"/>
+            <result property="practiceId" column="practice_id" jdbcType="BIGINT"/>
+            <result property="userResult" column="user_result" jdbcType="VARCHAR"/>
+            <result property="answerStatus" column="answer_status" jdbcType="TINYINT"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="qualifications" column="qualifications" jdbcType="VARCHAR"/>
+    </resultMap>
+    <resultMap id="PracticeAnswerNodeMap" type="com.kimo.model.dto.PracticeAnswerDto">
+        <id property="id" column="id"/>
+        <result property="courseId" column="course_id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="practiceId" column="practice_id"/>
+        <result property="userResult" column="userresult"/>
+        <association property="question" javaType="com.kimo.model.po.Question">
+            <id property="id" column="id"/>
+            <result property="subjects" column="subjects"/>
+            <result property="subjectsTitle" column="subjects_title"/>
+            <result property="subjectsResult" column="subjects_result"/>
+            <result property="optionA" column="option_a"/>
+            <result property="optionB" column="option_b"/>
+            <result property="optionC" column="option_c"/>
+            <result property="optionD" column="option_d"/>
+        </association>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,question_id,user_id,
+        course_id,practice_id,user_result,
+        answer_status,create_time,update_time,
+        qualifications
+    </sql>
+
+    <select id="selectQuestion" resultMap="PracticeAnswerNodeMap">
+        select
+            tp.id,
+            tp.course_id,
+            tp.question_id,
+            tp.userresult,
+            tm.id,
+            tm.subjects,
+            tm.subjects_title AS subjectsTitle,
+            tm.subjects_result AS subjectsResult,
+            tm.option_a AS optionA,
+            tm.option_b AS optionB,
+            tm.option_c AS optionC,
+            tm.option_d AS optionD,
+        from practice_answer tp
+                 LEFT JOIN question tm ON tp.question_id = tm.id
+        where tp.practice_id = #{id}
+        order by tm.id
+    </select>
+</mapper>

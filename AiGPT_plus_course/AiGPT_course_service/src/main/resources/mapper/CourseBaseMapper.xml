@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.CourseBaseMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.po.CourseBase">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="managerId" column="manager_id" jdbcType="BIGINT"/>
+            <result property="browses" column="browses" jdbcType="BIGINT"/>
+            <result property="memberPrice" column="member_price" jdbcType="BIGINT"/>
+            <result property="manager" column="manager" jdbcType="VARCHAR"/>
+            <result property="charge" column="charge" jdbcType="VARCHAR"/>
+            <result property="name" column="name" jdbcType="VARCHAR"/>
+            <result property="users" column="users" jdbcType="VARCHAR"/>
+            <result property="tags" column="tags" jdbcType="VARCHAR"/>
+            <result property="label" column="label" jdbcType="VARCHAR"/>
+            <result property="grade" column="grade" jdbcType="VARCHAR"/>
+            <result property="teachmode" column="teachmode" jdbcType="VARCHAR"/>
+            <result property="description" column="description" jdbcType="VARCHAR"/>
+            <result property="pic" column="pic" jdbcType="VARCHAR"/>
+            <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+            <result property="changeDate" column="change_date" jdbcType="TIMESTAMP"/>
+            <result property="auditStatus" column="audit_status" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,manager_id,manager,name,
+        users,tags,grade,teachmode,
+        description,pic,create_date,label,
+        change_date,charge,member_price,
+        audit_status,status
+    </sql>
+
+    <select id="getCourseCount" resultType="int">
+        SELECT COUNT(*) FROM course_base
+    </select>
+
+    <select id="getCourseListByPage" resultType="com.kimo.model.po.CourseBase">
+        SELECT *
+        FROM course_base
+                 LIMIT #{page}, #{size}
+    </select>
+
+</mapper>

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: chart
+  config:
+    import:
+      - nacos:chart-dev.yaml
+      - nacos:knife4j-dev.yaml  # 确保这里明确引入 content-service-dev.yaml
+  cloud:
+    nacos:
+      server-addr: 192.168.101.132:8848
+      discovery:
+        namespace: devAI_plus
+        group: aigpt-plus-project
+      config:
+        namespace: devAI_plus
+        group: aigpt-plus-project
+        file-extension: yaml
+        refresh-enabled: true
+        shared-configs:
+          - data-id: Knife4j-dev.yaml
+            group: aigpt-plus-common
+            refresh: true
+    #profiles默认为dev
+#  profiles:
+#    active: dev

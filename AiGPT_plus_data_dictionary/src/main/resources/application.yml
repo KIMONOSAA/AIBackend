@@ -1,0 +1,7 @@
+spring:
+  config:
+    import: optional:bootstrap.yml
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false

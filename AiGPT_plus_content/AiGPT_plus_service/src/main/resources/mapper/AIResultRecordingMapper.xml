@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.mapper.AiResultRecordingMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.model.entity.AIResultRecording">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="aiRoleId" column="aiRoleId" jdbcType="BIGINT"/>
+            <result property="aiTitle" column="aiTitle" jdbcType="VARCHAR"/>
+            <result property="aiBody" column="aiBody" jdbcType="VARCHAR"/>
+            <result property="aiResult" column="aiResult" jdbcType="VARCHAR"/>
+            <result property="userTitle" column="userTitle" jdbcType="VARCHAR"/>
+            <result property="userBody" column="userBody" jdbcType="VARCHAR"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,aiRoleId,aiTitle,
+        aiBody,aiResult,userTitle,
+        userBody,userId,createTime,
+        updateTime,isDelete
+    </sql>
+
+    <select id="findAiResultRecordById" resultType="com.kimo.model.entity.AIResultRecording" >
+        select * from airesultrecording where id = #{id}
+    </select>
+</mapper>

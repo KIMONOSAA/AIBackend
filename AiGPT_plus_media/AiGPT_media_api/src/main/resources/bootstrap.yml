@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: media-api
+  config:
+    import:
+      - nacos:media-api-dev.yaml
+      - nacos:media-service-dev.yaml
+      - nacos:knife4j-dev.yaml
+  cloud:
+    nacos:
+      server-addr: 192.168.101.132:8848
+      discovery:
+        namespace: devAI_plus
+        group: aigpt-plus-project
+      config:
+        namespace: devAI_plus
+        group: aigpt-plus-project
+        file-extension: yaml
+        refresh-enabled: true
+        extension-configs:
+          - data-id: content-service-dev.yaml
+            group: aigpt-plus-project
+            refresh: true
+        shared-configs:
+          - data-id: knife4j-dev.yaml
+            group: aigpt-plus-common
+            refresh: true
+
+    #profiles默认为dev
+  profiles:
+    active: dev
+

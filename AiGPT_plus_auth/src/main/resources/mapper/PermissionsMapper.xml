@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.ucenter.mapper.PermissionsMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.ucenter.model.po.Permissions">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="roleId" column="role_id" jdbcType="BIGINT"/>
+            <result property="code" column="code" jdbcType="VARCHAR"/>
+            <result property="permissionName" column="permission_name" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,role_id,code,
+        permission_name
+    </sql>
+</mapper>
