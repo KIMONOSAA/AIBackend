@@ -18,6 +18,10 @@ public class UserDto implements Serializable{
 
     private Long roleId;
 
+    private String qualification;
+
+    private String grade;
+
 
     /**
      * USER/Admin
@@ -34,10 +38,6 @@ public class UserDto implements Serializable{
      */
     private String email;
 
-    /**
-     * 密码
-     */
-    private String userPassword;
 
     /**
      * 用户昵称
@@ -63,9 +63,6 @@ public class UserDto implements Serializable{
      * 是否验证过
      */
     private Integer isEnable;
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
 
 
 }

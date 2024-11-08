@@ -17,6 +17,18 @@ public class UserLocalDto implements Serializable {
      */
     private Long id;
 
+    private Long roleId;
+
+    private String qualification;
+
+    private String grade;
+
+
+    /**
+     * USER/Admin
+     */
+    private String userRole;
+
     /**
      * 账号
      */
@@ -33,6 +45,31 @@ public class UserLocalDto implements Serializable {
      */
     private String userName;
 
+
+    /**
+     * 会员状态
+     */
+    private String member;
+
+
+
+
+    /**
+     * 是否第一次注册获得积分
+     */
+    private Integer isPoint;
+
+
+    /**
+     * 是否验证过
+     */
+    private Integer isEnable;
+
+
+    /**
+     * 用户头像
+     */
+    private byte[] userAvatar;
 
 
 }

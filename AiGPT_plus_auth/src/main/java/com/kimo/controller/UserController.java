@@ -211,11 +211,11 @@ public class UserController {
      * @return
      */
     @GetMapping("/get/login")
-    public BaseResponse<UserDto> getLoginUser(HttpServletRequest request) {
+    public BaseResponse<UserLocalDto> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(user,userDto);
-        return ResultUtils.success(userDto);
+        UserLocalDto userLocalDto = new UserLocalDto();
+        BeanUtils.copyProperties(user,userLocalDto);
+        return ResultUtils.success(userLocalDto);
     }
 
     /**

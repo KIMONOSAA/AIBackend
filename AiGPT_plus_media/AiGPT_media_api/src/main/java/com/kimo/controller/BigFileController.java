@@ -73,7 +73,7 @@ public class BigFileController {
      *
      */
     @PostMapping("/upload/uploadchunk")
-    @PermissionMethod(permission = "media_manager_course_update")
+//    @PermissionMethod(permission = "media_manager_course_update")
     public BaseResponse uploadchunk(@RequestParam("file") MultipartFile file,
                                     @RequestParam("fileMd5") String fileMd5,
                                     @RequestParam("chunk") int chunk) throws Exception {
@@ -91,14 +91,13 @@ public class BigFileController {
     public BaseResponse mergechunks(@RequestParam("fileMd5") String fileMd5,
                                     @RequestParam("fileName") String fileName,
                                     @RequestParam("chunkTotal") int chunkTotal,HttpServletRequest request) throws Exception {
-        Long companyId = 1232141425L;
 
         UploadFileParamsDto uploadFileParamsDto = new UploadFileParamsDto();
         uploadFileParamsDto.setFileType("video");
         uploadFileParamsDto.setTags("课程视频");
         uploadFileParamsDto.setFilename(fileName);
 
-        return mediaFileService.mergechunks(companyId,fileMd5,chunkTotal,uploadFileParamsDto,request);
+        return mediaFileService.mergechunks(fileMd5,chunkTotal,uploadFileParamsDto,request);
 
     }
 

@@ -124,7 +124,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     public Wrapper<CourseBase> getQueryWrapperList(CoursePublishListDto coursePublishListDto, HttpServletRequest request) {
         QueryWrapper<CourseBase> queryWrapper = new QueryWrapper<>();
 
-        queryWrapper.lambda().like(StringUtils.isNotEmpty(coursePublishListDto.getName()), CourseBase::getName, coursePublishListDto.getName());
+//        queryWrapper.lambda().like(StringUtils.isNotEmpty(coursePublishListDto.getName()), CourseBase::getName, coursePublishListDto.getName());
 
         queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getTags()), CourseBase::getTags, coursePublishListDto.getTags());
 
@@ -134,7 +134,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
         queryWrapper.eq("status", "203002");
 
-        queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getGrade()),CourseBase::getGrade, coursePublishListDto.getGrade());
+//        queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getGrade()),CourseBase::getGrade, coursePublishListDto.getGrade());
 
         // 获取排序字段和排序顺序
         String sortField = coursePublishListDto.getSortField();

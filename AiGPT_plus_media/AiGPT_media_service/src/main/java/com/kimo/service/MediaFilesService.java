@@ -70,13 +70,12 @@ public interface MediaFilesService extends IService<MediaFiles> {
 
     /**
      * 合并分块
-     * @param companyId  机构id
      * @param fileMd5  文件md5
      * @param chunkTotal 分块总和
      * @param uploadFileParamsDto 文件信息
      * @return BaseResponse
      */
-    public BaseResponse mergechunks(Long companyId,String fileMd5,int chunkTotal,UploadFileParamsDto uploadFileParamsDto,HttpServletRequest request);
+    public BaseResponse mergechunks(String fileMd5,int chunkTotal,UploadFileParamsDto uploadFileParamsDto,HttpServletRequest request);
 
 
     MediaFiles findById(String mediaId);

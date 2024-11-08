@@ -350,10 +350,11 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
 
     @Override
     //todo
-    public BaseResponse mergechunks(Long companyId, String fileMd5, int chunkTotal, UploadFileParamsDto uploadFileParamsDto,HttpServletRequest request) {
+    public BaseResponse mergechunks(String fileMd5, int chunkTotal, UploadFileParamsDto uploadFileParamsDto,HttpServletRequest request) {
         String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
         UserDto userDto = userClient.GobalGetLoginUser(username);
         String managerId = userDto.getId().toString();
+        Long companyId = userDto.getId();
 //        String id = "1794941858414170113";
         //=====获取分块文件路径=====
         String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
