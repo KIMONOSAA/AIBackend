@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kimo.ucenter.mapper.UserEnbleMapper">
+
+    <resultMap id="BaseResultMap" type="com.kimo.ucenter.model.po.UserEnble">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="isEnable" column="is_enable" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,email,is_enable
+    </sql>
+</mapper>

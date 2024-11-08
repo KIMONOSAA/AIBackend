@@ -26,6 +26,8 @@ import com.kimo.service.MediaFilesService;
 import com.kimo.utils.ServletUtils;
 import com.kimo.utils.SqlUtils;
 import io.minio.*;
+import io.minio.errors.*;
+import io.minio.http.Method;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,9 +43,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -158,26 +163,19 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
      * @param objectName 对象名称
      * @return void
      */
-    public boolean addMediaFilesToMinIOFile(String inputStream, String mimeType, String bucket, String objectName) {
-        try {
-            // 构建上传参数，文件大小未知，每块大小为 5MB
-//            PutObjectArgs uploadArgs = PutObjectArgs.builder()
-//                    .bucket(bucket)
-//                    .object(objectName)
-//                    .stream(inputStream) // 使用 5MB 分块大小
-//                    .contentType(mimeType)
-//                    .build();
-            UploadObjectArgs testbucket = UploadObjectArgs.builder()
+    public boolean addMediaFilesToMinIOFile(MultipartFile inputStream, String mimeType, String bucket, String objectName) {
+
+        try (InputStream fis = inputStream.getInputStream()){
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder()
                     .bucket(bucket)
+                    .contentType(inputStream.getContentType())
                     .object(objectName)
-                    .filename(inputStream)
-                    .contentType(mimeType)
+                    .stream(fis,fis.available(), -1)
                     .build();
-            minioClient.uploadObject(testbucket);
-            log.debug("上传文件流到 MinIO 成功, bucket: {}, objectName: {}", bucket, objectName);
+            minioClient.putObject(putObjectArgs);
             return true;
-        } catch (Exception e) {
-            log.error("上传文件流到 MinIO 出错, bucket: {}, objectName: {}, 错误原因: {}", bucket, objectName, e.getMessage(), e);
+        }catch (Exception e){
+            e.printStackTrace();
             throw new BusinessException(ErrorCode.SYSTEM_FILE_ERROR);
         }
     }
@@ -209,9 +207,8 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
             mediaFiles.setFilePath(objectName);
             mediaFiles.setCreateTime(LocalDateTime.now());
             mediaFiles.setStatus("002003");
-            if(!StringUtils.isEmpty(id)){
-                mediaFiles.setManagerId(Long.parseLong(id));
-            }
+            mediaFiles.setManagerId(companyId);
+
             mediaFiles.setStatus("1");
             //保存文件信息到文件表
             int insert = mediaFilesMapper.insert(mediaFiles);
@@ -293,7 +290,11 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
 
     @Transactional
     @Override
-    public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String fileStream,String objectName) {
+    public UploadFileResultDto uploadFile(UploadFileParamsDto uploadFileParamsDto, MultipartFile fileStream, String objectName,HttpServletRequest request) throws IOException {
+        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
+        UserDto userDto = userClient.GobalGetLoginUser(username);
+
+        Long userId = userDto.getId();
         // 文件名称
         String filename = uploadFileParamsDto.getFilename();
         // 文件扩展名
@@ -302,7 +303,7 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
         String mimeType = getMimeType(extension);
 
         // 计算文件的 MD5 值和文件大小
-        String fileMd5 = getFileMd5OfString(new File(fileStream)); // 需要调整该方法，以支持 InputStream
+        String fileMd5 = getFileMd5(fileStream.getInputStream()); // 需要调整该方法，以支持 InputStream
         long fileSize = uploadFileParamsDto.getFileSize(); // 你需要在上传前获取文件的大小
 
         // 文件的默认目录
@@ -320,7 +321,7 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
 
         // 将文件信息存储到数据库
         uploadFileParamsDto.setFileSize(fileSize); // 设置文件大小
-        MediaFiles mediaFiles = currentProxy.addMediaFilesToDb("", companyId, fileMd5, uploadFileParamsDto, bucket_Files, objectName);
+        MediaFiles mediaFiles = currentProxy.addMediaFilesToDb("", userId, fileMd5, uploadFileParamsDto, bucket_Files, objectName);
 
         // 准备返回数据
         UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
@@ -350,10 +351,10 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
     @Override
     //todo
     public BaseResponse mergechunks(Long companyId, String fileMd5, int chunkTotal, UploadFileParamsDto uploadFileParamsDto,HttpServletRequest request) {
-//        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-//        UserDto userDto = userClient.GobalGetLoginUser(username);
-//        String managerId = userDto.getId().toString();
-        String id = "1794941858414170113";
+        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
+        UserDto userDto = userClient.GobalGetLoginUser(username);
+        String managerId = userDto.getId().toString();
+//        String id = "1794941858414170113";
         //=====获取分块文件路径=====
         String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
         //组成将分块文件路径组成 List<ComposeSource>
@@ -408,7 +409,7 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
         }
 
         //文件入库
-        currentProxy.addMediaFilesToDb(id,companyId,fileMd5,uploadFileParamsDto,bucket_video,mergeFilePath);
+        currentProxy.addMediaFilesToDb(managerId,companyId,fileMd5,uploadFileParamsDto,bucket_video,mergeFilePath);
         //=====清除分块文件=====
         clearChunkFiles(chunkFileFolderPath,chunkTotal);
         return ResultUtils.success(true);
@@ -586,6 +587,26 @@ public void showMediaPlaySource(HttpServletResponse response, String fileMd5) {
             e.printStackTrace();
             log.error("清楚分块文件失败,chunkFileFolderPath:{}",chunkFileFolderPath,e);
         }
+    }
+
+
+    public String getPreviewUrl(String fileMd5){
+        //查询文件信息
+        MediaFiles mediaFiles = mediaFilesMapper.selectById(fileMd5);
+        if (mediaFiles != null) {
+            //桶
+            String bucket = mediaFiles.getBucket();
+            //存储目录
+            String filePath = mediaFiles.getFilePath();
+            //文件流
+            GetPresignedObjectUrlArgs build = GetPresignedObjectUrlArgs.builder().bucket(bucket).object(filePath).method(Method.GET).build();
+            try {
+                return minioClient.getPresignedObjectUrl(build);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+            }
+        }
+        return null;
     }
 
 

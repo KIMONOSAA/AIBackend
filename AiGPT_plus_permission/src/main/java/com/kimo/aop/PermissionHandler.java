@@ -6,6 +6,7 @@ import com.kimo.annotation.PermissionMethod;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.exception.BusinessException;
+import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
 import com.kimo.model.dto.Permissions;
 import com.kimo.model.dto.UserDto;
@@ -60,6 +61,8 @@ public class PermissionHandler {
         }
         UserPermissionDto userPermissionDto = new UserPermissionDto();
         BeanUtils.copyProperties(userDto, userPermissionDto);
+        ThrowUtils.throwIf(userPermissionDto.getRoleId() == null,ErrorCode.NOT_PERMISSIONS);
+        ThrowUtils.throwIf(userPermissionDto.getRoleId() <= 0,ErrorCode.NOT_PERMISSIONS);
         List<Permissions> userPermissions = userClient.getUserPermissions(userPermissionDto);
         boolean hasPermission = userPermissions.stream()
                 .anyMatch(permissions -> permissions.getCode().equals(permission));

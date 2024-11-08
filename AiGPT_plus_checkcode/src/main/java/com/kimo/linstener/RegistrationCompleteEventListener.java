@@ -41,13 +41,12 @@ public class RegistrationCompleteEventListener implements ApplicationListener<Re
     @Autowired
     private JavaMailSender mailSender;
 
-    private UserDto theUser;
+    private String theUser;
 
     @Override
     public void onApplicationEvent(RegistrationCompleteEvent event) {
-        theUser = new UserDto(); // 初始化 theUser 对象
-        BeanUtils.copyProperties(event.getUser(),theUser);
-        redisTemplate.opsForValue().set(RedisConstant.KEY_UTIL+theUser.getId(),event.getVerificationCode(), SECONDS, TimeUnit.MINUTES);
+        theUser = event.getEmail();
+        redisTemplate.opsForValue().set(RedisConstant.KEY_UTIL+event.getUserKey(),event.getVerificationCode(), SECONDS, TimeUnit.MINUTES);
         String verificationEmail = event.getVerificationCode();
         try {
             sendVerificationEmail(verificationEmail);
@@ -68,7 +67,7 @@ public class RegistrationCompleteEventListener implements ApplicationListener<Re
         MimeMessage message = mailSender.createMimeMessage();
         var messageHelper = new MimeMessageHelper(message);
         messageHelper.setFrom(masterEmail, senderName);
-        messageHelper.setTo(theUser.getEmail());
+        messageHelper.setTo(theUser);
         messageHelper.setSubject(subject);
         messageHelper.setText(mailContent, true);
         mailSender.send(message);

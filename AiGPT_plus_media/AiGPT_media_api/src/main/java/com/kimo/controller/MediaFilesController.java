@@ -11,6 +11,7 @@ import com.kimo.model.dto.UploadFileParamsDto;
 import com.kimo.model.dto.UploadFileResultDto;
 import com.kimo.model.po.MediaFiles;
 import com.kimo.service.MediaFilesService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
@@ -46,12 +47,12 @@ public class MediaFilesController {
 //    }
     @PostMapping( "/upload/coursefile")
     @PermissionMethod(permission = "media_manager_course_add")
-    public BaseResponse<UploadFileResultDto> upload(@RequestParam("filedata") MultipartFile filedata, @RequestParam("objectName") String objectName) throws IOException {
+    public BaseResponse<UploadFileResultDto> upload(@RequestParam("filedata") MultipartFile filedata, @RequestParam("objectName") String objectName, HttpServletRequest request) throws IOException {
+
 
         UploadFileParamsDto uploadFileParamsDto =
                 new UploadFileParamsDto();
 
-        Long companyId = 1232141425L;
         //文件大小
         uploadFileParamsDto.setFileSize(filedata.getSize());
         //图片
@@ -61,15 +62,20 @@ public class MediaFilesController {
         //文件大小
         long fileSize = filedata.getSize();
         uploadFileParamsDto.setFileSize(fileSize);
-        //创建临时文件
-        File tempFile = File.createTempFile("minio", "temp");
+//        //创建临时文件
+//        File tempFile = File.createTempFile("minio", "temp");
+//        //上传的文件拷贝到临时文件
+//        filedata.transferTo(tempFile);
+//        //文件路径
+//        String absolutePath = tempFile.getAbsolutePath();
         //上传的文件拷贝到临时文件
-        filedata.transferTo(tempFile);
-        //文件路径
-        String absolutePath = tempFile.getAbsolutePath();
-        //上传的文件拷贝到临时文件
-        return ResultUtils.success(mediaFileService.uploadFile(companyId, uploadFileParamsDto, absolutePath, objectName));
+        return ResultUtils.success(mediaFileService.uploadFile(uploadFileParamsDto, filedata, objectName,request));
 
+    }
+
+    @GetMapping("/getPreviewUrl")
+    public BaseResponse<String> getPreviewUrl(@RequestParam("filemd5") String filemd5) {
+        return ResultUtils.success(mediaFileService.getPreviewUrl(filemd5));
     }
 
 }

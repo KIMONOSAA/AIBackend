@@ -9,7 +9,9 @@ import com.kimo.model.dto.UploadFileResultDto;
 import com.kimo.model.po.MediaFiles;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -20,12 +22,11 @@ import java.io.InputStream;
 public interface MediaFilesService extends IService<MediaFiles> {
 
     /**
-     * 上传文件
-     * @param companyId 机构id
+     * 上传文件id
      * @param uploadFileParamsDto 上传文件信息
      * @return 文件信息
      */
-    public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String fileStream,String objectName);
+    public UploadFileResultDto uploadFile(UploadFileParamsDto uploadFileParamsDto, MultipartFile fileStream, String objectName,HttpServletRequest request) throws IOException;
 
     /**
      *
@@ -45,6 +46,10 @@ public interface MediaFilesService extends IService<MediaFiles> {
      *
      */
     public BaseResponse<Boolean> checkFile(String fileMd5);
+
+
+
+    public String getPreviewUrl(String fileMd5);
 
     /**
      * 检查分块是否存在

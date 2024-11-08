@@ -78,7 +78,7 @@ public class CourseBaseInfoController {
      * @return
      */
     @PostMapping("/course/list/record")
-//    @PermissionMethod(permission = "course_manager_course_all")
+    @PermissionMethod(permission = "course_manager_course_all")
     public BaseResponse<Page<CourseLearnRecord>> listCourseRecord(@RequestBody  QueryCourseParamsDto queryCourseParams, HttpServletRequest request){
 
         String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);

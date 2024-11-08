@@ -10,7 +10,7 @@ import java.util.Date;
 /**
  * @author Mr.kimo
  */
-@TableName(value ="user")
+
 @Data
 public class UserDto implements Serializable{
     /**
@@ -28,11 +28,6 @@ public class UserDto implements Serializable{
      * 邮箱
      */
     private String email;
-
-    /**
-     * 密码
-     */
-    private String userPassword;
 
     /**
      * 用户昵称

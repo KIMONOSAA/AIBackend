@@ -12,6 +12,8 @@ import com.kimo.ucenter.model.po.Point;
 public interface PointService extends IService<Point> {
 
     Boolean updatePoint(Long userId, Long point);
+
+    Boolean addPoint(Long userId);
 }
 
 

@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import com.kimo.utils.RedisVerificationUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -86,13 +87,15 @@ public class UserController {
     @PostMapping("/register")
     @Transactional
     public BaseResponse<Long> register(@RequestParam("file") MultipartFile multipartFile, @RequestParam("confirmPassword") String confirmPassword,
-                                       @RequestParam("userPassword") String userPassword, @RequestParam("userAccount") String userAccount, @RequestParam("email") String email) throws IOException {
+                                       @RequestParam("userPassword")  String userPassword, @RequestParam("qualification") String qualification, @RequestParam("userAccount") String userAccount, @RequestParam("grade") String grade, @RequestParam("email") String email) throws IOException {
         UserAddRequest userAddRequest = new UserAddRequest();
         userAddRequest.setUserAccount(userAccount);
         userAddRequest.setUserName(userAccount);
         userAddRequest.setEmail(email);
         userAddRequest.setPassword(userPassword);
         userAddRequest.setConfirmPassword(confirmPassword);
+        userAddRequest.setQualification(qualification);
+        userAddRequest.setGrade(grade);
         long userId = userService.registration(userAddRequest,multipartFile);
         ThrowUtils.throwIf(userId == 0,ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(userId);
@@ -105,8 +108,7 @@ public class UserController {
      * @return trye或false
      */
     @PostMapping("/publish")
-    public BaseResponse<Boolean> getPublishEvent(@RequestBody UserPublishEventRequest userPublishEventRequest, HttpServletRequest request){
-        ThrowUtils.throwIf(userPublishEventRequest.getId() <= 0,ErrorCode.OPERATION_ERROR);
+    public BaseResponse<Long> getPublishEvent(@RequestBody UserPublishEventRequest userPublishEventRequest, HttpServletRequest request){
         ThrowUtils.throwIf("".equals(userPublishEventRequest.getEmail()),ErrorCode.OPERATION_ERROR);
         ThrowUtils.throwIf(userPublishEventRequest.getEmail() == null,ErrorCode.OPERATION_ERROR);
         if(StringUtils.isBlank(userPublishEventRequest.getEmail())){
@@ -123,7 +125,7 @@ public class UserController {
     @PostMapping("/verificationEmail")
     public BaseResponse<String> checkVerificationEmail(@RequestBody UserEmailVerificationRequest userEmail){
         boolean isValid = redisVerificationUtil.verifyCode(userEmail.userId(),userEmail.code(),userEmail.email(), RedisConstant.KEY_UTIL);
-        String isEnable = userService.saveUserForUpdateEnabled(userEmail.userId(),isValid);
+        String isEnable = userService.saveUserForUpdateEnabled(userEmail.userId(),isValid,userEmail.email());
         return isEnable.equals(CommonConstant.IS_TRUE) ? ResultUtils.success(isEnable) : ResultUtils.error(ErrorCode.EMAIL_ERROR,"验证失败");
     }
 
@@ -209,9 +211,11 @@ public class UserController {
      * @return
      */
     @GetMapping("/get/login")
-    public BaseResponse<User> getLoginUser(HttpServletRequest request) {
+    public BaseResponse<UserDto> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
-        return ResultUtils.success(user);
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(user,userDto);
+        return ResultUtils.success(userDto);
     }
 
     /**
@@ -342,8 +346,13 @@ public class UserController {
      * 操作积分数
      */
     @PostMapping("/update/point")
-    public Boolean updatePoint(@RequestParam  Long userId,@RequestParam Long point){
+    public Boolean updatePoint(@RequestParam Long userId,@RequestParam Long point){
         return pointService.updatePoint(userId,point);
+    }
+
+    @PostMapping("/add/point")
+    public Boolean addPoint(@RequestParam  Long userId){
+        return pointService.addPoint(userId);
     }
 
 

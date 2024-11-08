@@ -52,5 +52,9 @@ public class UserAddRequest implements Serializable {
      */
     private String userRole;
 
+    private String grade;
+
+    private String qualification;
+
     private static final long serialVersionUID = 1L;
 }

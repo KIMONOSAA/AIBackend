@@ -12,12 +12,14 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class RegistrationCompleteEvent extends ApplicationEvent {
 
-    private UserDto user;
+    private Long userKey;
     private String verificationCode;
+    private String email;
 
-    public RegistrationCompleteEvent(UserDto user,String verificationCode) {
-        super(user);
-        this.user = user;
+    public RegistrationCompleteEvent(Long userKey,String verificationCode,String email) {
+        super(userKey);
+        this.email = email;
+        this.userKey = userKey;
         this.verificationCode = verificationCode;
     }
 

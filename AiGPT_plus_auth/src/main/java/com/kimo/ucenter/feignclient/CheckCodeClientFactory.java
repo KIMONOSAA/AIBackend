@@ -13,9 +13,10 @@ public class CheckCodeClientFactory implements FallbackFactory<CheckCodeClient> 
     @Override
     public CheckCodeClient create(Throwable throwable) {
         return new CheckCodeClient() {
+
             @Override
-            public void getPublishEvent(@RequestBody UserDto userDto, @RequestParam String code) {
-                log.debug("调用验证码服务熔断异常:{}", throwable.getMessage());
+            public void getPublishEvent(Long key, String code, String email) {
+
             }
         };
     }

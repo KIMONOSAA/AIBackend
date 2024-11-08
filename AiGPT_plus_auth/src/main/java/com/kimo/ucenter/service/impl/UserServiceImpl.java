@@ -10,6 +10,7 @@ import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.ucenter.mapper.PointMapper;
+import com.kimo.ucenter.mapper.UserEnbleMapper;
 import com.kimo.ucenter.mapper.UserMemberMapper;
 import com.kimo.ucenter.model.po.*;
 import com.kimo.ucenter.service.PermissionsService;
@@ -43,7 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.sql.rowset.serial.SerialBlob;
 import java.io.IOException;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +69,8 @@ import static com.kimo.constant.CaffeineConstant.CAFFEINE_USER;
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    @Autowired
+    private UserEnbleMapper userEnbleMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -105,6 +110,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private ServletUtils  servletUtils;
+
+    @Autowired
+    private UserEnbleMapper userEnableMapper;
 
 
     /**
@@ -315,87 +323,93 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public long registration(UserAddRequest request, MultipartFile file) throws IOException {
-
-//        Blob avatarPhoyo = null;
-//        try {
-//            if(file != null && !file.isEmpty()){
-//                byte[] bytes = file.getBytes();
-//                avatarPhoyo = new SerialBlob(bytes);
-//            }
-//        } catch (Exception e) {
-//            throw new BusinessException(ErrorCode.PARAMS_ERROR,"文件类型错误");
-//        }
-        String userName = request.getUserName();
-        String userAccount = request.getUserAccount();
-        String userPassword = request.getPassword();
-        String userEmail = request.getEmail();
-        String userCheckPassword = request.getConfirmPassword();
-
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("email",userEmail);
-        User user = userMapper.selectOne(queryWrapper);
-        if(user != null && user.getEmail().equals(userEmail)){
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR,"你已经注册过");
+        Blob avatarPhoyo = null;
+        try {
+            if(file != null && !file.isEmpty()){
+                byte[] bytes = file.getBytes();
+                avatarPhoyo = new SerialBlob(bytes);
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型错误");
         }
-        if (StringUtils.isAnyBlank(userAccount, userPassword, userCheckPassword,userEmail)) {
+
+        // 检查用户是否已经注册
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", request.getEmail());
+        User existingUser = userMapper.selectOne(queryWrapper);
+        if (existingUser != null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户已经注册");
+        }
+
+        // 校验输入参数
+        if (StringUtils.isAnyBlank(request.getUserAccount(), request.getPassword(), request.getConfirmPassword(), request.getEmail())) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
-        if (userAccount.length() < 4) {
+        if (request.getUserAccount().length() < 4) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
         }
-        if (userPassword.length() < 8 || userCheckPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+        if (request.getPassword().length() < 8 || request.getConfirmPassword().length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码过短");
         }
-        // 密码和校验密码相同
-        if (!userPassword.equals(userCheckPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次密码不一致");
         }
-        synchronized (userEmail.intern()){
-            boolean isEmail = this.isEmail(userEmail);
-            if(isEmail){
+
+        // 通过邮箱判断注册
+        synchronized (request.getEmail().intern()) {
+            boolean isEmailValid = this.isEmail(request.getEmail());
+            if (isEmailValid) {
                 User newUser = new User();
-                newUser.setEmail(userEmail);
-                assert file != null;
-                newUser.setUserAvatar(file.getBytes());
-                newUser.setUserName("user");
-                newUser.setUserAccount(userAccount);
-                newUser.setUserPassword(passwordEncoder.encode(userPassword));
-                newUser.setUserName(userName);
-                int insert = userMapper.insertUser(newUser);
-                if (insert <= 0) {
+                newUser.setEmail(request.getEmail());
+                byte[] avatarBytes = null;
+                try {
+                    // Retrieve the byte array from the Blob object
+
+                    if (avatarPhoyo != null) {
+                        avatarBytes = avatarPhoyo.getBytes(1, (int) avatarPhoyo.length()); // Get the entire blob as a byte array
+                    }
+                }catch (Exception e){
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+                }
+
+                newUser.setUserAvatar(avatarBytes); // Store the avatar as a byte array
+                newUser.setUserAccount(request.getUserAccount());
+                newUser.setUserPassword(passwordEncoder.encode(request.getPassword())); // Encrypt the password
+                newUser.setUserName(request.getUserName());
+                newUser.setGrade(request.getGrade());
+                newUser.setQualification(request.getQualification());
+                newUser.setIsEnable(1); // Enable the user
+
+                // Insert the new user into the database
+                int insertResult = userMapper.insert(newUser);
+                if (insertResult <= 0) {
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
                 }
-                return newUser.getId();
+                return newUser.getId(); // Return the ID of the newly created user
             }
-
         }
-        return 0;
+        return 0; // Return 0 if the email is invalid
     }
 
     @Override
-    public Boolean isPublishEvent(UserPublishEventRequest userEmailAndId) {
+    public Long isPublishEvent(UserPublishEventRequest userEmailAndId) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(SqlConstants.CHART_ID, userEmailAndId.getId());
         queryWrapper.eq(SqlConstants.EMAIL_NAME,userEmailAndId.getEmail());
         User user = userMapper.selectOne(queryWrapper);
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(user,userDto);
-        if(user != null){
-            checkCodeClient.getPublishEvent(userDto, redisVerificationUtil.generateVerification());
-            return true;
-        }
-        return false;
+        ThrowUtils.throwIf(user != null,ErrorCode.OPERATION_ERROR);
+        long key = IdWorkerUtils.getInstance().nextId();
+        checkCodeClient.getPublishEvent(key, redisVerificationUtil.generateVerification(),userEmailAndId.getEmail());
+
+        return key;
     }
 
     @Override
-    public String saveUserForUpdateEnabled(String s, boolean isValid) {
+    public String saveUserForUpdateEnabled(String s, boolean isValid,String email) {
         if(isValid){
-            long userId = Long.parseLong(s);
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq(SqlConstants.CHART_ID,userId);
-            User user = userMapper.selectOne(queryWrapper);
-            user.setIsEnable(1);
-            this.updateById(user);
+            UserEnble userEnble = new UserEnble();
+            userEnble.setIsEnable(1);
+            userEnble.setEmail(email);
+            userEnbleMapper.insert(userEnble);
             return CommonConstant.IS_TRUE;
         }else{
             return CommonConstant.IS_FALSE;

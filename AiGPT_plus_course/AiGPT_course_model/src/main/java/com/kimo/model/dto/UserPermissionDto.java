@@ -14,6 +14,18 @@ public class UserPermissionDto implements Serializable {
      */
     private Long id;
 
+    private Long roleId;
+
+
+    private String qualification;
+
+    private String grade;
+
+    /**
+     * USER/Admin
+     */
+    private String userRole;
+
     /**
      * 账号
      */
@@ -34,10 +46,24 @@ public class UserPermissionDto implements Serializable {
      */
     private String userName;
 
+
     /**
      * 会员状态
      */
     private String member;
 
-    private Long roleId;
+
+
+
+    /**
+     * 是否第一次注册获得积分
+     */
+    private Integer isPoint;
+
+
+    /**
+     * 是否验证过
+     */
+    private Integer isEnable;
+
 }

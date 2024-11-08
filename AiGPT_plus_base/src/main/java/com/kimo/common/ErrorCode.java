@@ -60,6 +60,7 @@ public enum ErrorCode {
     PERMISSION_NOT_FOUND(100001,"无权限"),
     PAID_SUCCESS_NO_NEED_TO_REPAY(90006,"已支付，无需重新支付"),
     GENERATING_THE_QR_CODE_ERROR(90005,"生成二维码错误"),
+    NOT_PERMISSIONS(100002,"无权限"),
     FILE_CHUNK_ERROR(50007, "上传分块失败");
 
 

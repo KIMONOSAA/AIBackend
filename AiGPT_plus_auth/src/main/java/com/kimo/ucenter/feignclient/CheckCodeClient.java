@@ -11,5 +11,5 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface CheckCodeClient {
 
     @PostMapping(value = "/checkcode/publish")
-    public void getPublishEvent(@RequestBody UserDto userDto,@RequestParam("code") String code);
+    public void getPublishEvent(@RequestParam("key") Long key,@RequestParam("code") String code,@RequestParam("email") String email);
 }

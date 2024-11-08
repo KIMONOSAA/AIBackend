@@ -28,13 +28,12 @@ public class RedisVerificationUtil {
     }
 
     public boolean verifyCode(String userId,String code,String email,String key){
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(SqlConstants.EMAIL_NAME,email);
-        queryWrapper.eq(SqlConstants.CHART_ID,userId);
-        User user = userMapper.selectOne(queryWrapper);
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR);
-        key = key + userId;
-        String storedCode = redisTemplate.opsForValue().get(key);
+//        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.eq(SqlConstants.EMAIL_NAME,email);
+//        queryWrapper.eq(SqlConstants.CHART_ID,userId);
+//        User user = userMapper.selectOne(queryWrapper);
+//        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR);
+        String storedCode = redisTemplate.opsForValue().get(key + userId);
         return code.equals(storedCode);
     }
 

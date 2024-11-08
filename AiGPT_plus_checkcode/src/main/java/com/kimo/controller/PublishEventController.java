@@ -16,7 +16,7 @@ public class PublishEventController {
     private IsPublishService isPublishService;
 
     @PostMapping("/publish")
-    public void getPublishEvent(@RequestBody UserDto userDto,@RequestParam String code){
-        isPublishService.Publish(userDto,code);
+    public void getPublishEvent(@RequestParam Long key,@RequestParam String code,@RequestParam String email){
+        isPublishService.Publish(key,code,email);
     }
 }

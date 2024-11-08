@@ -18,6 +18,10 @@ public class UserDto implements Serializable{
 
     private Long roleId;
 
+    private String qualification;
+
+    private String grade;
+
 
     /**
      * USER/Admin

@@ -137,9 +137,9 @@ public interface UserService extends IService<User> {
 
     long registration(UserAddRequest request, MultipartFile file) throws IOException;
 
-    Boolean isPublishEvent(UserPublishEventRequest userEmailAndId);
+    Long isPublishEvent(UserPublishEventRequest userEmailAndId);
 
-    String saveUserForUpdateEnabled(String s, boolean isValid);
+    String saveUserForUpdateEnabled(String s, boolean isValid,String email);
 
     Optional<AuthentianResponse> authentication(UserAuthenticationRequest request,HttpServletRequest httpServletRequest);
 

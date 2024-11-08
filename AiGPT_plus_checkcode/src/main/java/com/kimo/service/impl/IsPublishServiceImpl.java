@@ -16,8 +16,8 @@ public class IsPublishServiceImpl implements IsPublishService {
     private ApplicationEventPublisher publisher;
 
     @Override
-    public void Publish(UserDto userDto, String code) {
-        publisher.publishEvent(new RegistrationCompleteEvent(userDto, code));
+    public void Publish(Long key, String code,String email) {
+        publisher.publishEvent(new RegistrationCompleteEvent(key, code,email));
     }
 
     public String generateVerification(){
