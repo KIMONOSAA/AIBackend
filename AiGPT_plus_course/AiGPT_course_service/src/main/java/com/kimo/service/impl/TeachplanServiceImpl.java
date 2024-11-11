@@ -1,19 +1,19 @@
 package com.kimo.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kimo.common.ErrorCode;
 import com.kimo.exception.BusinessException;
+
 import com.kimo.mapper.TeachplanMapper;
 import com.kimo.mapper.TeachplanMediaMapper;
-import com.kimo.model.dto.BindTeachplanMediaDto;
-import com.kimo.model.dto.SaveTeachplanDto;
-import com.kimo.model.dto.TeachplanDto;
-import com.kimo.model.dto.TeachplanListDto;
+import com.kimo.model.dto.*;
+
 import com.kimo.model.po.Teachplan;
 import com.kimo.model.po.TeachplanMedia;
 import com.kimo.service.TeachplanService;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Mr.kimo
@@ -93,12 +94,15 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
         return teachplanDtos;
     }
 
+
     private Long getTeachplanCount(Long courseId) {
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Teachplan::getCourseId,courseId);
         Long count = teachplanMapper.selectCount(queryWrapper);
         return count;
     }
+
+
 
 }
 

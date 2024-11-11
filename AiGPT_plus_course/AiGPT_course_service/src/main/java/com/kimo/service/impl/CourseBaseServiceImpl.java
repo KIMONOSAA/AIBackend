@@ -18,10 +18,14 @@ import com.kimo.feignclient.UserClient;
 import com.kimo.mapper.CourseBaseMapper;
 import com.kimo.mapper.CourseMarketMapper;
 import com.kimo.mapper.TeachplanMapper;
+import com.kimo.mapper.TeachplanMediaMapper;
 import com.kimo.model.dto.*;
 import com.kimo.model.po.CourseBase;
 import com.kimo.model.po.CourseMarket;
+import com.kimo.model.po.Teachplan;
+import com.kimo.model.po.TeachplanMedia;
 import com.kimo.service.CourseBaseService;
+import com.kimo.service.TeachplanMediaService;
 import com.kimo.service.TeachplanService;
 import com.kimo.utils.ServletUtils;
 import com.kimo.utils.SqlUtils;
@@ -44,6 +48,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -83,6 +88,12 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     @Autowired
     private TeachplanService teachplanService;
+
+    @Autowired
+    private TeachplanMapper teachplanMapper;
+
+    @Autowired
+    private TeachplanMediaMapper teachplanMediaMapper;
 
     @Autowired
     private RedisTemplate<String, byte[]> redisByteTemplate;
@@ -410,8 +421,9 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     @Override
     public CourseBaseInfoDto updateCourseBase(EditCourseDto editCourseDto,HttpServletRequest request) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto userDto = userClient.GobalGetLoginUser(username);
+        UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
         Long courseId = editCourseDto.getId();
         String caffeineCourseIdKey = CAFFEINE_COURSE + courseId;
         String caffeineCourseMarketKey = CAFFEINE_COURSE_MARKET + courseId;
@@ -422,7 +434,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         CourseBase courseBase = courseBaseMapper.selectOne(queryWrapper);
         ThrowUtils.throwIf(courseBase == null,ErrorCode.COURSE_NOT_FOUND);
 
-        if(!courseBase.getManagerId().equals(userDto.getId())){
+        if(!courseBase.getManagerId().equals(userId)){
             throw  new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
 
@@ -501,6 +513,34 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
         return courseBase;
     }
+    @Override
+    public Boolean deletedTeachplanOrMedia(Long teachId,Long courseId, HttpServletRequest request) {
+        UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        if(courseBase==null){
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        if(!Objects.equals(courseBase.getManagerId(), userId)){
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        Teachplan teachplan = teachplanMapper.selectById(teachId);
+        if(!Objects.equals(teachplan.getCourseId(), courseId)){
+            throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+        }
+        QueryWrapper<TeachplanMedia> teachplanMediaQueryWrapper = new QueryWrapper<>();
+        teachplanMediaQueryWrapper.eq("course_id", courseId);
+        teachplanMediaQueryWrapper.eq("user_id", userId);
+        teachplanMediaQueryWrapper.eq("teachplan_id",teachId);
+        TeachplanMedia teachplanMedia = teachplanMediaMapper.selectOne(teachplanMediaQueryWrapper);
+        int isTeachplanMedia = teachplanMediaMapper.deleteById(teachplanMedia.getId());
+
+        int isTeachplan = teachplanMapper.deleteById(teachId);
+        return isTeachplan == 1 && isTeachplanMedia == 1;
+    }
+
+
 
     @Override
     public List<TeachplanListDto> findTeachplanTreeRedis(Long courseId) {
@@ -536,6 +576,17 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
             }
         }
         return List.of();
+    }
+
+    @Override
+    public Boolean deletedCourseBase(Long courseId, HttpServletRequest request) {
+        UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        CourseBase courseBase = courseBaseMapper.selectById(userId);
+        ThrowUtils.throwIf(courseBase == null,ErrorCode.COURSE_NOT_FOUND);
+        courseBaseMapper.deleteById(courseId);
+        return true;
     }
 
     private List<TeachplanListDto> getFromRedis(String redisTeachplan) {

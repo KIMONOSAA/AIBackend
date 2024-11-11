@@ -237,9 +237,9 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     @Override
     @Transactional
     public void commitAudit(Long courseId, HttpServletRequest request) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto userDto = userClient.GobalGetLoginUser(username);
-        ThrowUtils.throwIf(userDto == null,ErrorCode.NOT_LOGIN_ERROR);
+        UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
         //约束校验
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
         //课程审核状态
@@ -280,8 +280,8 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         //设置预发布记录状态,已提交
         coursePublishPre.setStatus("202003");
         //教学机构id
-        coursePublishPre.setManagerId(userDto.getId());
-        coursePublishPre.setManager(userDto.getUserName());
+        coursePublishPre.setManagerId(userId);
+        coursePublishPre.setManager(userDtoForRedisOrLock.getUserName());
         //提交时间
         coursePublishPre.setCreateDate(LocalDateTime.now());
         CoursePublishPre coursePublishPreUpdate = coursePublishPreMapper.selectById(courseId);
@@ -300,8 +300,8 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     @Transactional
     @Override
     public void publish(HttpServletRequest request, Long courseId) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto userDto = userClient.GobalGetLoginUser(username);
+        UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         String caffeineCourseIdKey = CAFFEINE_COURSE + courseId;
         String caffeineCourseMarketKey = CAFFEINE_COURSE_MARKET + courseId;
         //约束校验

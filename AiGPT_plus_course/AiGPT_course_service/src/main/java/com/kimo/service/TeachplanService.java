@@ -7,6 +7,7 @@ import com.kimo.model.dto.SaveTeachplanDto;
 import com.kimo.model.dto.TeachplanListDto;
 import com.kimo.model.po.Teachplan;
 import com.kimo.model.po.TeachplanMedia;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -25,5 +26,6 @@ public interface TeachplanService extends IService<Teachplan> {
     void saveTeachplan(SaveTeachplanDto teachplan);
 
     List<TeachplanListDto> findTeachplanTree(Long courseId);
+
 
 }

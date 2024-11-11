@@ -29,9 +29,13 @@ public interface CourseBaseService extends IService<CourseBase> {
 
     Boolean getHotCoursesBase();
 
+    Boolean deletedTeachplanOrMedia(Long teachId,Long courseId, HttpServletRequest request);
+
     CourseBase getCourseBaseInfoByRedis(Long courseId);
 
     CourseBase getCourseBaseInfoN(Long courseId);
 
     List<TeachplanListDto> findTeachplanTreeRedis(Long courseId);
+
+    Boolean deletedCourseBase(Long courseId, HttpServletRequest request);
 }

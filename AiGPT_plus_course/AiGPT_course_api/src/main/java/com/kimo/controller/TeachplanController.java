@@ -9,6 +9,7 @@ import com.kimo.model.dto.BindTeachplanMediaDto;
 import com.kimo.model.dto.SaveTeachplanDto;
 import com.kimo.model.dto.TeachplanListDto;
 import com.kimo.service.TeachplanService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,6 +56,8 @@ public class TeachplanController {
     void associationMedia(@RequestBody BindTeachplanMediaDto bindTeachplanMediaDto){
         teachplanService.associationMedia(bindTeachplanMediaDto);
     }
+
+
 
 
 }

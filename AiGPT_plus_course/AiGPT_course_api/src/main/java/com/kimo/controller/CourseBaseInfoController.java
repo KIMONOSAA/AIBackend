@@ -158,4 +158,29 @@ public class CourseBaseInfoController {
                 courseBaseService.getQueryWrapperList(coursePublishListDto,request));
         return ResultUtils.success(aiRolesPage);
     }
+
+
+    /**
+     * 删除课程
+     */
+    /**
+     * 修改课程
+     * @return
+     */
+    @PutMapping("/deleted/course")
+    @PermissionMethod(permission = "course_manager_course_all")
+    public BaseResponse<Boolean> deletedCourseBase(@RequestParam("courseId") Long courseId,HttpServletRequest request){
+
+        return ResultUtils.success(courseBaseInfoService.deletedCourseBase(courseId,request));
+    }
+
+
+    /**
+     * 删除课程计划（章节）
+     */
+    @PostMapping("/deleted/teachplan")
+    @PermissionMethod(permission = "course_manager_course_all")
+    public BaseResponse<Boolean> deletedTeachPlanOrMedia(@RequestParam("teachId") Long teachId,@RequestParam("courseId") Long courseId, HttpServletRequest request){
+        return ResultUtils.success(courseBaseService.deletedTeachplanOrMedia(teachId,courseId,request));
+    }
 }
