@@ -299,6 +299,26 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         return biResponse;
     }
 
+    @Override
+    public String getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData,String courseId, HttpServletRequest request) {
+        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
+        UserDto user = userClient.GobalGetLoginUser(username);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+
+        String botId = "7436587258616348712";
+//        String user = "user";
+        String token = "pat_qlj1MPjOw6Z9BsaSCqHS0gLKPQoya6XWIR3poLgG9MZbvtsQXsXLLUJPkIJ34GHX";
+
+
+        return "";
+    }
+
+    @Override
+    public String getCourseInfoDataForCouZi(MultipartFile file, HttpServletRequest request) {
+        return "";
+    }
+
+
 //    private synchronized void increase(UserDto user){
 //        QueryWrapper<Point> queryWrapper = new QueryWrapper<>();
 //        queryWrapper.eq("userId",user.getId());

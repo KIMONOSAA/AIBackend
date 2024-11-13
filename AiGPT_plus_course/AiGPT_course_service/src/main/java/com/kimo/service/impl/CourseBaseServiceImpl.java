@@ -228,8 +228,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     @Override
     @Transactional
     public CourseBaseInfoDto createCourseBase( AddCourseDto addCourseDto,HttpServletRequest request) {
-        UserDto userDto = new UserDto();
-        getUserDtoForRedis(userDto,request,SecurityConstants.AUTHORIZATION_HEADER);
+        UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
 //        UserDto userDto = userClient.GobalGetLoginUser(username);
         //合法性校验
         ThrowUtils.throwIf(StringUtils.isBlank(addCourseDto.getName()), ErrorCode.COURSE_NAME_NOT_FOUND_ERROR);
@@ -243,8 +242,8 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         BeanUtils.copyProperties(addCourseDto,courseBaseNew);
         //添加时间
         courseBaseNew.setCreateDate(LocalDateTime.now());
-        courseBaseNew.setManagerId(userDto.getId());
-        courseBaseNew.setManager(userDto.getUserName());
+        courseBaseNew.setManagerId(userDtoForRedisOrLock.getId());
+        courseBaseNew.setManager(userDtoForRedisOrLock.getUserName());
 
         courseBaseNew.setAuditStatus("202002");
         courseBaseNew.setStatus("203001");

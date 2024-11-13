@@ -33,4 +33,8 @@ public interface ChartService extends IService<Chart> {
     Page<Chart> listChartUserByPage(long current, long size, ChartQueryRequest chartQueryRequest);
 
     BiResponse genChartByAIRabbitMQ(MultipartFile multipartFile, GenChartyByAIRequest genChartByAI, HttpServletRequest request);
+
+    String getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData,String courseId,HttpServletRequest request);
+
+    String getCourseInfoDataForCouZi(MultipartFile file,HttpServletRequest request);
 }

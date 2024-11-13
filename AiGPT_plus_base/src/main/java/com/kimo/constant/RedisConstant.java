@@ -5,6 +5,8 @@ package com.kimo.constant;
 public interface RedisConstant {
     String USER_INFO_ID_PRE = "user:info:";
 
+    String GATEWAY = "gateway:user:";
+
     public static final String STATS = "stats:video:";
 
     public static final String KEY_UTIL = "asouli";

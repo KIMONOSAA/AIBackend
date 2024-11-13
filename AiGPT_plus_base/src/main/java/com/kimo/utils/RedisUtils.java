@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.kimo.common.ErrorCode;
+import com.kimo.constant.RedisConstant;
 import com.kimo.exception.BusinessException;
 import com.kimo.model.TeachplanListDto;
 import com.kimo.model.UserDto;
@@ -22,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
@@ -122,6 +124,12 @@ public class RedisUtils {
             redisTemplate.opsForValue().set(cacheKey, serializedData, 1, TimeUnit.HOURS); // 同步到 Redis 缓存
             commonCaffeine.put(cacheKey, data); // 同步到 Caffeine 缓存
         }
+    }
+
+    public void storeTokenInRedis(String token, String userEmail) {
+        // 将 token 存入 Redis，key 为用户邮箱，value 为 token
+        String key = RedisConstant.GATEWAY + userEmail;
+        redisTemplate.opsForValue().set(key, token, Duration.ofMinutes(3));  // 设置过期时间为 1 小时
     }
 
 
