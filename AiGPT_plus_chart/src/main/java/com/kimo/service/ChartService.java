@@ -26,7 +26,7 @@ public interface ChartService extends IService<Chart> {
 
 //    String getChartData(ChartDataRequest chartData) throws Exception;
 
-     String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String token) throws Exception;
+     String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception;
 
 //    String getChartData(String chartData) throws Exception;
 

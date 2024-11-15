@@ -63,6 +63,7 @@ public class PracticeChartConsumer {
 
         ChartDataRequest oldChartDataRequest = objectMapper.readValue(chartDataRequestJson, ChartDataRequest.class);
         PracticeRecordDto oldPracticeRecord = objectMapper.readValue(practiceRecordJson, PracticeRecordDto.class);
+        String userId = oldPracticeRecord.getUserId().toString();
         ThrowUtils.throwIf(oldChartDataRequest == null, ErrorCode.NOT_LOGIN_ERROR);
         ThrowUtils.throwIf(oldPracticeRecord == null,ErrorCode.NOT_LOGIN_ERROR);
         long recordId = oldPracticeRecord.getId(); // 假设 Accuracy 有一个 getId() 方法
@@ -81,7 +82,7 @@ public class PracticeChartConsumer {
         RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + recordId);
         lock.lock();
         try {
-            String chartData = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,token);
+            String chartData = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,userId,token);
             practiceRecordPro.setAiresult(chartData);
             practiceRecordProMapper.insert(practiceRecordPro);
             channel.basicAck(deliveryTag, false);

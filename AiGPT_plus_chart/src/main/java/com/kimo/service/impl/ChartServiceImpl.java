@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kimo.amqp.ChartProducer;
 import com.kimo.common.ErrorCode;
+import com.kimo.config.AIMessageHandler;
 import com.kimo.constant.ChartConstant;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
@@ -138,16 +139,16 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 //        return xunFeiEventSourceListener.getAnswer();
 //    }
     @Override
-    public String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String token) throws Exception{
+    public String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception{
             if (chartData != null){
-                return this.getChartDataForCouZiChart(chartData, botId, user, token);
+                return this.getChartDataForCouZiChart(chartData, botId, user,userId, token);
             }else {
-                return this.getChartDataForCouZiChartForFileData(fileData,botId,user,token);
+                return this.getChartDataForCouZiChartForFileData(fileData,botId,user,userId,token);
             }
     }
 
 
-    private String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String token) throws Exception {
+    private String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String userId,String token) throws Exception {
         CouZiCompletionRequest chatCompletion = null;
         ArrayList<CouZiCompletionEventResponse> couZiCompletionEventResponses = new ArrayList<>();
         List<String> answerContents = new ArrayList<>();
@@ -185,8 +186,10 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
                     log.info("返回内容: {}", response.toString());
 //                    couZiCompletionEventResponses.add(response.getContent());
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
+                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType()) && response.getCreatedAt() == null) {
                         // 存储 content
+                        // 假设从 AI 获取的响应内容是 aiResponseContent，用户 ID 是 clientId
+                        AIMessageHandler.sendMessageToUser(userId, response.getContent());
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {
@@ -217,7 +220,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
 
 
-    public String getChartDataForCouZiChartForFileData(CouZiAdditionalFileMessage fileData,String botId,String user,String token) throws Exception {
+    public String getChartDataForCouZiChartForFileData(CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception {
         List<String> answerContents = new ArrayList<>();
         String lastAnswerContent = null;
         // 1. 创建参数
@@ -408,7 +411,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
         String chartDataForCouZiChart = null;
         try {
-            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(chartData,null, botId, loginUserForUserName.get("userName"), token);
+            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(chartData,null, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
         }

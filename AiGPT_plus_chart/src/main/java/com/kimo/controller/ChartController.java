@@ -252,14 +252,17 @@ public class ChartController {
      * @return
      */
     @PostMapping("/gen/couzi/async")
-    public BaseResponse<String> getChartDataForCouZi(@RequestBody GouZiAdditionalMessages chartData)  {
+    public BaseResponse<String> getChartDataForCouZi(@RequestBody GouZiAdditionalMessages chartData,HttpServletRequest request)  {
+
 
         String botId = "7432966743104520192";
         String user = "user";
         String token = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
         String biResponse = null;
         try {
-            biResponse = chartService.getChartDataForCouZiChartAndFileData(chartData,null,botId,user,token);
+            Long loginUser = chartService.getLoginUser(request);
+            String userId = String.valueOf(loginUser);
+            biResponse = chartService.getChartDataForCouZiChartAndFileData(chartData,null,botId,user,userId,token);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }

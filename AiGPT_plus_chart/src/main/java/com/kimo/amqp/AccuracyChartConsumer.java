@@ -12,6 +12,7 @@ import com.kimo.service.AccuracyChartService;
 import com.kimo.service.ChartService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
@@ -54,6 +55,7 @@ public class AccuracyChartConsumer {
         // 反序列化 Accuracy 对象
         Accuracy accuracy = objectMapper.readValue(message, Accuracy.class);
         long accuracyId = accuracy.getUserId(); // 假设 Accuracy 有一个 getId() 方法
+        String s = String.valueOf(accuracyId);
         RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + accuracyId);
         lock.lock();
         try {
@@ -81,7 +83,7 @@ public class AccuracyChartConsumer {
             String botId = "7432966743104520192";
             String user = "user";
             String token = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
-            String chartDataForCouZi = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,token);
+            String chartDataForCouZi = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,s,token);
             String[] splits = chartDataForCouZi.split("【【【【【");
             if (splits.length < 3) {
                 handleChartUpdateError(accuracyChart.getId(), "图表生成格式错误");
