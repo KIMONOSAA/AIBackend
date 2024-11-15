@@ -61,6 +61,8 @@ public enum ErrorCode {
     PAID_SUCCESS_NO_NEED_TO_REPAY(90006,"已支付，无需重新支付"),
     GENERATING_THE_QR_CODE_ERROR(90005,"生成二维码错误"),
     NOT_PERMISSIONS(100002,"无权限"),
+    FETCH_COUZI_ERROR(100003,"扣子错误"),
+    ADD_DATABASE_ERROR(100004,"添加数据错误"),
     FILE_CHUNK_ERROR(50007, "上传分块失败");
 
 

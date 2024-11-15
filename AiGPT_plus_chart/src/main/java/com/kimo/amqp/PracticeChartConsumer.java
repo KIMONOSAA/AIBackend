@@ -81,7 +81,7 @@ public class PracticeChartConsumer {
         RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + recordId);
         lock.lock();
         try {
-            String chartData = chartService.getChartDataForCouZiChart(gouZiAdditionalMessages,botId,user,token);
+            String chartData = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,token);
             practiceRecordPro.setAiresult(chartData);
             practiceRecordProMapper.insert(practiceRecordPro);
             channel.basicAck(deliveryTag, false);

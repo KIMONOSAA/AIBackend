@@ -2,15 +2,21 @@ package com.kimo.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kimo.domain.CouZiAdditionalFileMessage;
+import com.kimo.domain.CouZiCompletionFileResponse;
 import com.kimo.domain.GouZiAdditionalMessages;
 import com.kimo.model.dto.chart.ChartDataRequest;
 import com.kimo.model.dto.chart.ChartEditRequest;
 import com.kimo.model.dto.chart.ChartQueryRequest;
 import com.kimo.model.dto.chart.GenChartyByAIRequest;
+import com.kimo.model.dto.po.AIMasterData;
 import com.kimo.model.dto.po.Chart;
 import com.kimo.model.dto.vo.BiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
+
 /**
  * @author Mr.kimo
  */
@@ -20,7 +26,7 @@ public interface ChartService extends IService<Chart> {
 
 //    String getChartData(ChartDataRequest chartData) throws Exception;
 
-     String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String token) throws Exception;
+     String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String token) throws Exception;
 
 //    String getChartData(String chartData) throws Exception;
 
@@ -34,7 +40,14 @@ public interface ChartService extends IService<Chart> {
 
     BiResponse genChartByAIRabbitMQ(MultipartFile multipartFile, GenChartyByAIRequest genChartByAI, HttpServletRequest request);
 
-    String getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData,String courseId,HttpServletRequest request);
+    Map<String,String> getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData, String botId,String token, String courseId, HttpServletRequest request);
 
-    String getCourseInfoDataForCouZi(MultipartFile file,HttpServletRequest request);
+    Map<String,String> getCourseInfoDataForCouZi(CouZiAdditionalFileMessage chartData, String courseId, HttpServletRequest request);
+
+    Map<String,String> getCourseInfoDataForCouZi(MultipartFile file, HttpServletRequest request);
+
+    Map<String,String> getLearnTeachPlanForCouZi(GouZiAdditionalMessages chartData, String courseId, HttpServletRequest request);
+
+    void IsAiMessagesession(Map<String,String> map,String data);
+    AIMasterData IsAiMessagesession(Map<String,String> map, MultipartFile file, String title);
 }

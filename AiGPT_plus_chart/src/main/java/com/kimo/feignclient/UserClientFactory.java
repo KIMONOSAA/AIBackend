@@ -25,6 +25,11 @@ public class UserClientFactory implements FallbackFactory<UserClient> {
             public Boolean isAdmin(HttpServletRequest request) {
                 return null;
             }
+
+            @Override
+            public Boolean updatePoint(Long userId, Long point) {
+                return null;
+            }
         };
     }
 }

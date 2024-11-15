@@ -5,15 +5,20 @@ import com.kimo.annotation.AuthCheck;
 import com.kimo.common.*;
 import com.kimo.amqp.ChartProducer;
 import com.kimo.constant.UserConstant;
+import com.kimo.domain.CouZiAdditionalFileMessage;
+import com.kimo.domain.CouZiCompletionFileResponse;
+import com.kimo.domain.CouZiMessageAndMasterRequest;
 import com.kimo.domain.GouZiAdditionalMessages;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.mapper.ChartMapper;
 import com.kimo.model.dto.chart.*;
+import com.kimo.model.dto.po.AIMasterData;
 import com.kimo.model.dto.po.AccuracyChart;
 import com.kimo.model.dto.po.Chart;
 import com.kimo.model.dto.po.PracticeRecordPro;
 import com.kimo.model.dto.vo.BiResponse;
+import com.kimo.service.AIMessageSessionService;
 import com.kimo.service.AccuracyChartService;
 import com.kimo.service.ChartService;
 
@@ -28,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -246,21 +252,112 @@ public class ChartController {
      * @return
      */
     @PostMapping("/gen/couzi/async")
-    public String getChartDataForCouZi(@RequestBody GouZiAdditionalMessages chartData)  {
+    public BaseResponse<String> getChartDataForCouZi(@RequestBody GouZiAdditionalMessages chartData)  {
 
         String botId = "7432966743104520192";
         String user = "user";
         String token = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
         String biResponse = null;
         try {
-            biResponse = chartService.getChartDataForCouZiChart(chartData,botId,user,token);
+            biResponse = chartService.getChartDataForCouZiChartAndFileData(chartData,null,botId,user,token);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
 
-        return biResponse;
+        return ResultUtils.success(biResponse);
     }
 
+    /**
+     * 智能辅导-总结课程
+     *
+     */
+    @PostMapping("/gen/couzi/course/{courseId}")
+    public BaseResponse<String> getCourseInfoDataForCouZi(@RequestBody GouZiAdditionalMessages chartData,@PathVariable("courseId") Long courseId,HttpServletRequest request)  {
+        String courseIId = String.valueOf(courseId);
+        String title = "总结课程";
+        String botId = "7436587258616348712";
+//        String user = "user";
+        String token = "pat_qlj1MPjOw6Z9BsaSCqHS0gLKPQoya6XWIR3poLgG9MZbvtsQXsXLLUJPkIJ34GHX";
+        ThrowUtils.throwIf(courseIId.isBlank(), ErrorCode.ADD_DATABASE_ERROR);
+        Map<String, String> courseInfoDataForCouZi = null;
+        try {
+            courseInfoDataForCouZi = chartService.getCourseInfoDataForCouZi(chartData,botId,token, courseIId, request);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        chartService.IsAiMessagesession(courseInfoDataForCouZi,title);
+        return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
+    }
+
+
+    /**
+     * 智能辅导-图片AI上传
+     *
+     */
+    @PostMapping("/gen/couzi/pic")
+    public BaseResponse<Map<String, String>> getPicResultForCouZi(@RequestPart("file") MultipartFile multipartFile,HttpServletRequest request)  {
+
+        Map<String, String> courseInfoDataForCouZi = null;
+        try {
+            courseInfoDataForCouZi = chartService.getCourseInfoDataForCouZi(multipartFile, request);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        AIMasterData aiMasterData = chartService.IsAiMessagesession(courseInfoDataForCouZi, multipartFile, "图片识别");
+        courseInfoDataForCouZi.put("aiMaster",aiMasterData.getId().toString());
+        courseInfoDataForCouZi.put("aisession",aiMasterData.getAiMessageSessionId().toString());
+        return ResultUtils.success(courseInfoDataForCouZi);
+    }
+
+    /**
+     * 智能辅导-图片AI生成答案与分析
+     */
+    @PostMapping("/gen/couzi/pic/data")
+    public BaseResponse<String> getPicResultForCouZiForData(@RequestBody CouZiMessageAndMasterRequest gouZiAdditionalMessagesAndMaster, HttpServletRequest request)  {
+        String courseIId = "65";
+        String botId = "7436728231417544739";
+//        String user = "user";
+        String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
+        GouZiAdditionalMessages gouZiAdditionalMessages = new GouZiAdditionalMessages();
+        gouZiAdditionalMessages.setRole(gouZiAdditionalMessagesAndMaster.getRole());
+        gouZiAdditionalMessages.setContent_type(gouZiAdditionalMessagesAndMaster.getContent_type());
+        gouZiAdditionalMessages.setContent(gouZiAdditionalMessagesAndMaster.getContent());
+        Long masterId = gouZiAdditionalMessagesAndMaster.getMasterId();
+        Long sessionId = gouZiAdditionalMessagesAndMaster.getSessionId();
+        Map<String, String> courseInfoDataForCouZi = null;
+        try {
+            courseInfoDataForCouZi = chartService.getCourseInfoDataForCouZi(gouZiAdditionalMessages,botId,token, courseIId, request);
+            courseInfoDataForCouZi.put("masterId",masterId.toString());
+            courseInfoDataForCouZi.put("sessionId",sessionId.toString());
+            chartService.IsAiMessagesession(courseInfoDataForCouZi,"图片识别");
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
+
+    }
+
+
+
+
+
+    /**
+     * 智能辅导-学习计划路线
+     *
+     */
+    @PostMapping("/gen/couzi/learn/{courseId}")
+    public BaseResponse<String> getLearnTeachPlanForCouZi(@RequestBody GouZiAdditionalMessages chartData,@PathVariable("courseId") Long courseId,HttpServletRequest request)  {
+        String courseIId = String.valueOf(courseId);
+        String title = "学习计划路线";
+        Map<String, String> courseInfoDataForCouZi = null;
+        try {
+            courseInfoDataForCouZi = chartService.getLearnTeachPlanForCouZi(chartData,courseIId,request);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        chartService.IsAiMessagesession(courseInfoDataForCouZi,title);
+        return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
+    }
 
 
     /**

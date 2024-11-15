@@ -41,12 +41,12 @@ public class CoZeConfiguration {
     private OkHttpClient okHttpClient;
 
 
-    private long connectTimeout = 4500;
+    private long connectTimeout = 45000;
 
-    private long writeTimeout = 4500;
+    private long writeTimeout = 45000;
 
 
-    private long readTimeout = 4500;
+    private long readTimeout = 45000;
 
     
     /**

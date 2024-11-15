@@ -81,8 +81,7 @@ public class AccuracyChartConsumer {
             String botId = "7432966743104520192";
             String user = "user";
             String token = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
-            String chartDataForCouZi = chartService.getChartDataForCouZiChart(gouZiAdditionalMessages,botId,user,token);
-
+            String chartDataForCouZi = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,token);
             String[] splits = chartDataForCouZi.split("【【【【【");
             if (splits.length < 3) {
                 handleChartUpdateError(accuracyChart.getId(), "图表生成格式错误");

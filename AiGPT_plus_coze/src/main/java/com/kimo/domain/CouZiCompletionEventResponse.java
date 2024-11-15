@@ -66,4 +66,10 @@ public class CouZiCompletionEventResponse implements Serializable {
     @JsonProperty("section_id")
     private String sectionId;
 
+    @JsonProperty("created_at")
+    private Long createdAt;
+    @JsonProperty("updated_at")
+    private Long updatedAt;
+
+
 }

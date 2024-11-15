@@ -5,25 +5,28 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kimo.amqp.ChartProducer;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.ChartConstant;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
-import com.kimo.domain.CouZiCompletionEventResponse;
-import com.kimo.domain.CouZiCompletionRequest;
-import com.kimo.domain.GouZiAdditionalMessages;
+import com.kimo.domain.*;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
 import com.kimo.manager.RedisLimiterManager;
+import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.ChartMapper;
 
 import com.kimo.model.dto.chart.*;
+import com.kimo.model.dto.po.AIMasterData;
+import com.kimo.model.dto.po.AIMessageSession;
 import com.kimo.model.dto.po.Chart;
 
 import com.kimo.model.dto.vo.BiResponse;
+import com.kimo.service.AIMessageSessionService;
 import com.kimo.service.ChartService;
 import com.kimo.session.CoZeConfiguration;
 import com.kimo.session.CoZeSession;
@@ -45,10 +48,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import javax.sql.rowset.serial.SerialBlob;
+import java.io.IOException;
+import java.sql.Blob;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import static com.kimo.constants.CouZiConstant.BEARER;
@@ -72,6 +76,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     @Resource
     private ChartProducer chartProducer;
 
+    @Autowired
+    private AIMasterdataMapper masterdataMapper;
+
 //    @Resource
 //    private PointMapper pointMapper;
 
@@ -84,12 +91,31 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     @Autowired
     private ServletUtils  servletUtils;
 
+    @Autowired
+    private AIMessageSessionService aiMessageSessionService;
+
+    @Autowired
+    private AIMasterdataMapper  aiMasterdataMapper;
+
     @Override
     public Long getLoginUser(HttpServletRequest request) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto loginUser = userClient.GobalGetLoginUser(username);
-        ThrowUtils.throwIf(loginUser.getId() <= 0,ErrorCode.OPERATION_ERROR);
-        return loginUser.getId();
+        UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        ThrowUtils.throwIf(userId <= 0,ErrorCode.OPERATION_ERROR);
+        return userId;
+    }
+
+
+    private Map<String, String> getLoginUserForUserName(HttpServletRequest request) {
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
+        UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        ThrowUtils.throwIf(userId <= 0,ErrorCode.OPERATION_ERROR);
+        objectObjectHashMap.put("userId", String.valueOf(userId));
+        objectObjectHashMap.put("userName", userDtoForRedisOrLock.getUserName());
+        return objectObjectHashMap;
     }
 
 //    @Override
@@ -111,20 +137,26 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 //
 //        return xunFeiEventSourceListener.getAnswer();
 //    }
-
     @Override
-    public String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String token) throws Exception {
+    public String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String token) throws Exception{
+            if (chartData != null){
+                return this.getChartDataForCouZiChart(chartData, botId, user, token);
+            }else {
+                return this.getChartDataForCouZiChartForFileData(fileData,botId,user,token);
+            }
+    }
+
+
+    private String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String token) throws Exception {
+        CouZiCompletionRequest chatCompletion = null;
+        ArrayList<CouZiCompletionEventResponse> couZiCompletionEventResponses = new ArrayList<>();
         List<String> answerContents = new ArrayList<>();
         String lastAnswerContent = null;
         // 1. 创建参数
         ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
-//        GouZiAdditionalMessages goZeAdditionalMessages = new GouZiAdditionalMessages();
-//        goZeAdditionalMessages.setContent("分析需求:分析网站用户成绩信息，原始数据:[{科目,成绩语文,60数学,20英语,30，使用折线图},{科目,成绩语文,40数学,10英语,70，使用折线图},{科目,成绩语文,35数学,60英语,77，使用折线图}]");
-//        goZeAdditionalMessages.setRole("user");
-//        goZeAdditionalMessages.setContent_type("text");
         goZeAdditionalMessages1.add(chartData);
         // 1. 创建参数
-        CouZiCompletionRequest chatCompletion = CouZiCompletionRequest
+        chatCompletion = CouZiCompletionRequest
                 .builder()
                 .stream(true)
                 .userId(user)
@@ -132,6 +164,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
                 .botId(botId)
                 .AdditionalMessages(goZeAdditionalMessages1)
                 .build();
+        // 2. 发起请求
         // 2. 发起请求
         CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
         yuanQiConfiguration.setApiHost("https://api.coze.cn/");
@@ -150,6 +183,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
                     CouZiCompletionEventResponse response = JSONUtil.toBean(data, CouZiCompletionEventResponse.class);
 
 
+                    log.info("返回内容: {}", response.toString());
 //                    couZiCompletionEventResponses.add(response.getContent());
                     if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
                         // 存储 content
@@ -174,7 +208,79 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         });
         countDownLatch.await();
         if (!answerContents.isEmpty()) {
-           lastAnswerContent = answerContents.get(answerContents.size() - 1);
+            lastAnswerContent = answerContents.get(answerContents.size() - 1);
+            // 这里可以使用 lastAnswerContent，例如输出
+            System.out.println("最后的内容: " + lastAnswerContent);
+        }
+        return lastAnswerContent;
+    }
+
+
+
+    public String getChartDataForCouZiChartForFileData(CouZiAdditionalFileMessage fileData,String botId,String user,String token) throws Exception {
+        List<String> answerContents = new ArrayList<>();
+        String lastAnswerContent = null;
+        // 1. 创建参数
+        ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
+        ArrayList<CouZiAdditionalFileMessage> goZiAdditionalFileMessage = new ArrayList<>();
+        CouZiCompletionRequest chatCompletion = null;
+        CouZiCompletionFileRequest chatCompletionFile = null;
+
+        goZiAdditionalFileMessage.add(fileData);
+        chatCompletionFile = CouZiCompletionFileRequest
+                .builder()
+                .stream(true)
+                .userId(user)
+                .chatHistory(true)
+                .botId(botId)
+                .AdditionalMessages(goZiAdditionalFileMessage)
+                .build();
+
+        // 2. 发起请求
+        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
+        yuanQiConfiguration.setApiHost("https://api.coze.cn/");
+        yuanQiConfiguration.setApiKey(BEARER + token);
+        yuanQiConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        // 2. 会话工厂
+        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
+        // 3. 开启会话
+        this.coZeSession = factory.openSession();
+        // 2. 请求等待
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        EventSource eventSource = coZeSession.chatCompletions(token,null,chatCompletionFile, new EventSourceListener() {
+            @Override
+            public void onEvent(@NotNull EventSource eventSource, String id, String type, @NotNull String data) {
+                try {
+                    CouZiCompletionEventResponse response = JSONUtil.toBean(data, CouZiCompletionEventResponse.class);
+
+                    String responseBody = response.getContent();  // 获取响应体内容
+                    System.out.println("Response Body: " + responseBody);  // 打印响应内容
+//                    couZiCompletionEventResponses.add(response.getContent());
+                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
+                        // 存储 content
+                        answerContents.add(response.getContent());
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            @Override
+            public void onClosed(EventSource eventSource) {
+                log.info("对话完成" + eventSource.request().body().toString());
+                log.info("对话完成");
+                countDownLatch.countDown();
+            }
+
+
+            @Override
+            public void onFailure(EventSource eventSource, Throwable t, Response response) {
+                countDownLatch.countDown();
+                log.error("错误: {}, {}", response.code(), t.getMessage());
+            }
+        });
+        countDownLatch.await();
+        if (!answerContents.isEmpty()) {
+            lastAnswerContent = answerContents.get(answerContents.size() - 1);
         }
         return lastAnswerContent;
     }
@@ -191,26 +297,22 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
     @Override
     public Boolean deletedChart(HttpServletRequest request) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto user = userClient.GobalGetLoginUser(username);
-        long id = user.getId();
+        Long loginUser = this.getLoginUser(request);
         // 判断是否存在
-        Chart oldChart = chartMapper.selectById(id);
+        Chart oldChart = chartMapper.selectById(loginUser);
         ThrowUtils.throwIf(oldChart == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可删除
-        if (!oldChart.getUserId().equals(user.getId()) && !userClient.isAdmin(request)) {
+        if (!oldChart.getUserId().equals(loginUser) && !userClient.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        int id1 = chartMapper.deleteById(id);
+        int id1 = chartMapper.deleteById(loginUser);
         return id1 > 0;
     }
 
     @Override
     public Page<Chart> listMyChartByPage(HttpServletRequest request, ChartQueryRequest chartQueryRequest) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto user = userClient.GobalGetLoginUser(username);
-
-        chartQueryRequest.setUserId(user.getId());
+        Long loginUser = this.getLoginUser(request);
+        chartQueryRequest.setUserId(loginUser);
         long current = chartQueryRequest.getCurrent();
         long size = chartQueryRequest.getPageSize();
         // 限制爬虫
@@ -224,14 +326,13 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         Chart chart = new Chart();
         BeanUtils.copyProperties(chartEditRequest, chart);
 
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto user = userClient.GobalGetLoginUser(username);
+        Long loginUser = this.getLoginUser(request);
         long id = chartEditRequest.getId();
         // 判断是否存在
         Chart oldChart = chartMapper.selectById(id);
         ThrowUtils.throwIf(oldChart == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人或管理员可编辑
-        if (!oldChart.getUserId().equals(user.getId()) && !userClient.isAdmin(request)) {
+        if (!oldChart.getUserId().equals(loginUser) && !userClient.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         int updateById = chartMapper.updateById(chart);
@@ -300,22 +401,164 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     }
 
     @Override
-    public String getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData,String courseId, HttpServletRequest request) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto user = userClient.GobalGetLoginUser(username);
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+    public Map<String, String> getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData,String botId,String token, String courseId, HttpServletRequest request) {
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
+        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
+        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
 
-        String botId = "7436587258616348712";
-//        String user = "user";
-        String token = "pat_qlj1MPjOw6Z9BsaSCqHS0gLKPQoya6XWIR3poLgG9MZbvtsQXsXLLUJPkIJ34GHX";
-
-
-        return "";
+        String chartDataForCouZiChart = null;
+        try {
+            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(chartData,null, botId, loginUserForUserName.get("userName"), token);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
+        }
+        objectObjectHashMap.put("aiData", chartDataForCouZiChart);
+        return objectObjectHashMap;
     }
 
     @Override
-    public String getCourseInfoDataForCouZi(MultipartFile file, HttpServletRequest request) {
-        return "";
+    public Map<String, String> getCourseInfoDataForCouZi(CouZiAdditionalFileMessage chartData, String courseId, HttpServletRequest request) {
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
+        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
+        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
+
+
+        String botId = "7436728231417544739";
+//        String user = "user";
+        String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
+        String chartDataForCouZiChart = null;
+        try {
+            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(null,chartData, botId, loginUserForUserName.get("userName"), token);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
+        }
+        objectObjectHashMap.put("aiData", chartDataForCouZiChart);
+        return objectObjectHashMap;
+    }
+
+    @Override
+    public Map<String, String> getCourseInfoDataForCouZi(MultipartFile file, HttpServletRequest request) {
+
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
+        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
+        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
+        String botId = "7436728231417544739";
+//        String user = "user";
+        String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
+        String chartDataForCouZiChart = null;
+        // 2. 发起请求
+        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
+        yuanQiConfiguration.setApiHost("https://api.coze.cn/");
+        yuanQiConfiguration.setApiKey(BEARER + token);
+        yuanQiConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        // 2. 会话工厂
+        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
+        // 3. 开启会话
+        this.coZeSession = factory.openSession();
+        try {
+            CouZiCompletionFileResponse couZiCompletionFileResponse = coZeSession.chatCompletions(null, null, file);
+            objectObjectHashMap.put("picId",couZiCompletionFileResponse.getData().getId());
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
+        }
+
+        return objectObjectHashMap;
+    }
+
+    @Override
+    public Map<String,String> getLearnTeachPlanForCouZi(GouZiAdditionalMessages chartData, String courseId, HttpServletRequest request) {
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
+        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
+        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
+        String botId = "7436592804966989851";
+//        String user = "user";
+        String token = "pat_9d7iBX080ReNOFLog3fb8y1k9iLAOMFh0hkGxwcmNhQI33EjCB5vK11oufhDnZbV";
+        String chartDataForCouZiChart = null;
+        try {
+            chartDataForCouZiChart = this.getChartDataForCouZiChart(chartData, botId, loginUserForUserName.get("userName"), token);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
+        }
+        objectObjectHashMap.put("aiData", chartDataForCouZiChart);
+        return objectObjectHashMap;
+    }
+
+    private Boolean IsBooleanAiMessageSession(Map<String,String> map,String title){
+        long userId = Long.parseLong(map.get("userId"));
+        QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id",userId);
+        AIMessageSession aiMessageSessionId = aiMessageSessionService.getOne(queryWrapper);
+        if(aiMessageSessionId == null){
+            AIMessageSession aiMessageSession1 = new AIMessageSession();
+            aiMessageSession1.setUserId(userId);
+            aiMessageSession1.setTitle(title);
+            aiMessageSession1.setCreateTime(LocalDateTime.now());
+            aiMessageSession1.setUpdateTime(LocalDateTime.now());
+            boolean save = aiMessageSessionService.save(aiMessageSession1);
+            ThrowUtils.throwIf(!save,ErrorCode.ADD_DATABASE_ERROR);
+        }
+        return true;
+    }
+
+
+    private Boolean updatedAiMasterData(Map<String,String> map,String data,MultipartFile file){
+        long userId = Long.parseLong(map.get("userId"));
+        long masterId = Long.parseLong(map.get("masterId"));
+        long sessionId = Long.parseLong(map.get("sessionId"));
+        AIMasterData aiMasterData = aiMasterdataMapper.selectById(masterId);
+        ThrowUtils.throwIf(aiMasterData == null,ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(aiMasterData.getAiMessageSessionId() != sessionId,ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(aiMasterData.getUserId() != userId,ErrorCode.NOT_FOUND_ERROR);
+        aiMasterData.setAiBody(map.get("aiData"));
+        aiMasterData.setUpdateTime(LocalDateTime.now());
+        aiMasterdataMapper.updateById(aiMasterData);
+        return true;
+    }
+
+
+    private AIMasterData createAiMasterData(Map<String,String> map,String data,MultipartFile file){
+        long userId = Long.parseLong(map.get("userId"));
+        QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id",userId);
+        AIMessageSession aiMessageSessionId = aiMessageSessionService.getOne(queryWrapper);
+        AIMasterData aiMasterData = new AIMasterData();
+        aiMasterData.setUserId(userId);
+        aiMasterData.setCreateTime(LocalDateTime.now());
+        aiMasterData.setUpdateTime(LocalDateTime.now());
+        aiMasterData.setAiBody(map.get("aiData"));
+        aiMasterData.setUserBody(data);
+        aiMasterData.setAiMessageSessionId(aiMessageSessionId.getId());
+        if(file != null){
+            Blob avatarPhoyo = null;
+            byte[] avatarBytes = null;
+            try {
+                if(file != null && !file.isEmpty()){
+                    byte[] bytes = file.getBytes();
+                    avatarPhoyo = new SerialBlob(bytes);
+                }
+                if (avatarPhoyo != null) {
+                    avatarBytes = avatarPhoyo.getBytes(1, (int) avatarPhoyo.length()); // Get the entire blob as a byte array
+                }
+                aiMasterData.setPic(avatarBytes);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型错误");
+            }
+
+        }
+        int insert = masterdataMapper.insert(aiMasterData);
+        return aiMasterData;
+    }
+
+    @Override
+    public void IsAiMessagesession(Map<String,String> map,String data) {
+        Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
+        ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
+        updatedAiMasterData(map, data,null);
+    }
+
+    @Override
+    public AIMasterData IsAiMessagesession(Map<String,String> map, MultipartFile file,String title) {
+        return createAiMasterData(map,title,file);
     }
 
 

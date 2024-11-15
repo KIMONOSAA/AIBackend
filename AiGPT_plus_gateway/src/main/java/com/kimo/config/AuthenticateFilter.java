@@ -91,15 +91,19 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
         if(isPv(rawPath)){
             return unauthorizedResponse(exchange, serverHttpResponse);
         }
-
-        final String jwt;
-        final String userEmail;
-        if(header == null || !header.startsWith("Bearer ")){
+        if(requestUrl.contains("/chart/v3/api-docs")){
             return chain.filter(exchange);
         }
         if(requestUrl.contains("/auth")){
             return chain.filter(exchange);
         }
+        final String jwt;
+        final String userEmail;
+
+        if(header == null || !header.startsWith("Bearer ")){
+            return unauthorizedResponse(exchange, serverHttpResponse);
+        }
+
         jwt = header.substring(7);
             if (StringUtil.isEmpty(jwt)){
                return unauthorizedResponse(exchange, serverHttpResponse);

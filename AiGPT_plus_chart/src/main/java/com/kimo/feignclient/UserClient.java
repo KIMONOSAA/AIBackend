@@ -25,4 +25,8 @@ public interface UserClient {
     public Boolean isAdmin(HttpServletRequest request);
 
 
+    @PostMapping("/auth/update/point")
+    public Boolean updatePoint(@RequestParam("userId") Long userId,@RequestParam("point") Long point);
+
+
 }
