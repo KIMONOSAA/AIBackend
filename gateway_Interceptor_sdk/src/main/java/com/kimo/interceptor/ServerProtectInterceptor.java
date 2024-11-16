@@ -2,7 +2,7 @@ package com.kimo.interceptor;
 
 import com.kimo.config.CloudSecurityProperties;
 import com.kimo.constant.CloudConstant;
-import com.kimo.constant.RedisConstant;
+import com.kimo.constant.RedisDataConstant;
 import com.kimo.dto.ResultData;
 import com.kimo.utils.JwtUtils;
 import com.kimo.utils.WebUtils;
@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Base64;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class ServerProtectInterceptor implements HandlerInterceptor {
@@ -34,27 +37,23 @@ public class ServerProtectInterceptor implements HandlerInterceptor {
         resultData.setSuccess(false);
         resultData.setStatus(HttpServletResponse.SC_FORBIDDEN);
         resultData.setMessage("请通过网关访问资源");
-        final String header = request.getHeader("Authorization");
+        final String header = request.getHeader("X-GatewayTokenHeader");
 
-        final String jwt;
-        final String userEmail;
-        if(header == null || !header.startsWith("Bearer ")){
+        if(header == null){
             WebUtils.writeJson(response,resultData);
             return false;
         }
 
-        jwt = header.substring(7);
-        if (StringUtils.isEmpty(jwt)){
+        if (StringUtils.isEmpty(header)){
             WebUtils.writeJson(response,resultData);
             return false;
         }
 
         JwtUtils jwtUtils = new JwtUtils();
-        userEmail = jwtUtils.extractUsername(jwt);
         if (!properties.getOnlyFetchByGateway()) { 
             return true; 
         }
-        String key = RedisConstant.GATEWAY + userEmail;
+        String key = RedisDataConstant.GATEWAY + header;
         String cachedToken = redisTemplate.opsForValue().get(key);
         if (StringUtils.isEmpty(cachedToken)){
             WebUtils.writeJson(response,resultData);
@@ -62,11 +61,6 @@ public class ServerProtectInterceptor implements HandlerInterceptor {
         }
         String token = request.getHeader(CloudConstant.GATEWAY_TOKEN_HEADER);
 
-        // 比较 Redis 中的 Token 和当前请求中的 Token 是否匹配
-        if (!cachedToken.equals(token)) {
-            WebUtils.writeJson(response,resultData);
-            return false;  // 或者返回 403 等错误响应
-        }
         return true;
     } 
  

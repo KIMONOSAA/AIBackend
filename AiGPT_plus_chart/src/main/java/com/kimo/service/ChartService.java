@@ -48,6 +48,7 @@ public interface ChartService extends IService<Chart> {
 
     Map<String,String> getLearnTeachPlanForCouZi(GouZiAdditionalMessages chartData, String courseId, HttpServletRequest request);
 
+    void IsAiMessagesessionForCourse(Map<String,String> map,String data);
     void IsAiMessagesession(Map<String,String> map,String data);
     AIMasterData IsAiMessagesession(Map<String,String> map, MultipartFile file, String title);
 }

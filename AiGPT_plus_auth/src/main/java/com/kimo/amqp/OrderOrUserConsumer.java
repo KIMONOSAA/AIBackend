@@ -2,8 +2,9 @@ package com.kimo.amqp;
 
 import com.alibaba.fastjson2.JSON;
 import com.kimo.common.PageRequest;
-import com.kimo.constant.RedisConstant;
 
+
+import com.kimo.constant.RedisConstant;
 import com.kimo.messagesdk.model.po.MqMessage;
 import com.kimo.ucenter.service.UserService;
 import com.rabbitmq.client.Channel;

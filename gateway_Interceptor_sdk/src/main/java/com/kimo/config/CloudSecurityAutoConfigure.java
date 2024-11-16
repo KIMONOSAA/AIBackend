@@ -15,7 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 
 @Configuration
-@ComponentScan
+@ComponentScan("com.kimo.config")
 @EnableConfigurationProperties(CloudSecurityProperties.class)
 public class CloudSecurityAutoConfigure{ 
  

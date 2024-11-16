@@ -87,16 +87,16 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
         final String header = serverHttpRequest.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         //获取请求路径
         String rawPath = exchange.getRequest().getURI().getRawPath();
-
+        if(requestUrl.contains("/auth/auth") || requestUrl.contains("/auth/auth/publish") || requestUrl.contains("/auth/auth/verificationEmail") || requestUrl.contains("/auth/auth/authentication")){
+            return chain.filter(exchange);
+        }
         if(isPv(rawPath)){
             return unauthorizedResponse(exchange, serverHttpResponse);
         }
         if(requestUrl.contains("/chart/v3/api-docs")){
             return chain.filter(exchange);
         }
-        if(requestUrl.contains("/auth")){
-            return chain.filter(exchange);
-        }
+
         final String jwt;
         final String userEmail;
 
@@ -118,11 +118,11 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
         if(userEmail.isBlank()){
                 return unauthorizedResponse(exchange, serverHttpResponse);
         }
-        String jwtToken = jwtService.generateToken(date,userEmail,null);
-        redisUtils.storeTokenInRedis(jwtToken,userEmail);
-        ServerHttpRequest build = exchange.getRequest().mutate().header(GatewayConstant.GATEWAY_TOKEN_HEADER, jwtToken).build();
-        ServerWebExchange newExchange = exchange.mutate().request(build).build();
-        return chain.filter(newExchange);
+//        String jwtToken = jwtService.generateToken(date,userEmail,null);
+//        redisUtils.storeTokenInRedis(jwtToken,userEmail);
+//        ServerHttpRequest build = exchange.getRequest().mutate().header(GatewayConstant.GATEWAY_TOKEN_HEADER, userEmail).build();
+//        ServerWebExchange newExchange = exchange.mutate().request(build).build();
+        return chain.filter(exchange);
     }
 
     /**

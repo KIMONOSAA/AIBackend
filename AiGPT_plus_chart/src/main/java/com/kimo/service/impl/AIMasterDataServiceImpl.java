@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kimo.common.ErrorCode;
+import com.kimo.config.WebSocketHandler;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
@@ -73,6 +74,9 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
 
     @Autowired
     private AIMessageSessionService aiMessageSessionService;
+
+    @Autowired
+    private WebSocketHandler webSocketHandler;
 
 //    @Override
 //    @Transactional
@@ -151,6 +155,7 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
 //                    couZiCompletionEventResponses.add(response.getContent());
                     if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
                         // 存储 content
+                        webSocketHandler.sendMessageToUser(userId.toString(), response.getContent());
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {

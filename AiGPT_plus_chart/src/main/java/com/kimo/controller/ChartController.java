@@ -5,8 +5,6 @@ import com.kimo.annotation.AuthCheck;
 import com.kimo.common.*;
 import com.kimo.amqp.ChartProducer;
 import com.kimo.constant.UserConstant;
-import com.kimo.domain.CouZiAdditionalFileMessage;
-import com.kimo.domain.CouZiCompletionFileResponse;
 import com.kimo.domain.CouZiMessageAndMasterRequest;
 import com.kimo.domain.GouZiAdditionalMessages;
 import com.kimo.exception.BusinessException;
@@ -288,7 +286,7 @@ public class ChartController {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        chartService.IsAiMessagesession(courseInfoDataForCouZi,title);
+        chartService.IsAiMessagesessionForCourse(courseInfoDataForCouZi,title);
         return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
     }
 

@@ -3,9 +3,9 @@ package com.kimo.constant;
  * @author Mr.kimo
  */
 public interface RedisConstant {
-    String USER_INFO_ID_PRE = "user:info:";
+    public static final String USER_INFO_ID_PRE = "user:info:";
 
-    String GATEWAY = "gateway:user:";
+    public static final String GATEWAY = "gateway:user:";
 
     public static final String STATS = "stats:video:";
 

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kimo.amqp.ChartProducer;
 import com.kimo.common.ErrorCode;
 import com.kimo.config.AIMessageHandler;
+import com.kimo.config.WebSocketHandler;
 import com.kimo.constant.ChartConstant;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
@@ -97,6 +98,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
     @Autowired
     private AIMasterdataMapper  aiMasterdataMapper;
+
+    @Autowired
+    private WebSocketHandler webSocketHandler;
 
     @Override
     public Long getLoginUser(HttpServletRequest request) {
@@ -189,7 +193,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
                     if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType()) && response.getCreatedAt() == null) {
                         // 存储 content
                         // 假设从 AI 获取的响应内容是 aiResponseContent，用户 ID 是 clientId
-                        AIMessageHandler.sendMessageToUser(userId, response.getContent());
+                        webSocketHandler.sendMessageToUser(userId, response.getContent());
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {
@@ -261,6 +265,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 //                    couZiCompletionEventResponses.add(response.getContent());
                     if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
                         // 存储 content
+                        webSocketHandler.sendMessageToUser(userId, response.getContent());
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {
@@ -431,7 +436,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
         String chartDataForCouZiChart = null;
         try {
-            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(null,chartData, botId, loginUserForUserName.get("userName"), token);
+            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(null,chartData, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
         }
@@ -478,7 +483,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         String token = "pat_9d7iBX080ReNOFLog3fb8y1k9iLAOMFh0hkGxwcmNhQI33EjCB5vK11oufhDnZbV";
         String chartDataForCouZiChart = null;
         try {
-            chartDataForCouZiChart = this.getChartDataForCouZiChart(chartData, botId, loginUserForUserName.get("userName"), token);
+            chartDataForCouZiChart = this.getChartDataForCouZiChart(chartData, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
         }
@@ -557,6 +562,13 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
         ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
         updatedAiMasterData(map, data,null);
+    }
+
+    @Override
+    public void IsAiMessagesessionForCourse(Map<String,String> map,String data) {
+        Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
+        ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
+        createAiMasterData(map, data,null);
     }
 
     @Override

@@ -1,5 +1,5 @@
 package com.kimo.constant;
 
-public interface RedisConstant {
+public interface RedisDataConstant {
     String GATEWAY = "gateway:user:";
 }
