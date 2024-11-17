@@ -25,14 +25,21 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+import static com.kimo.constans.CouZiConstant.ACCURACY_CHART_BOT_ID;
+import static com.kimo.constans.CouZiConstant.ACCURACY_CHART_BOT_TOKEN;
 import static com.kimo.constant.RabbitMQConstant.ACCURACY_DIRECT_QUEUE;
 
-/**
- * @author Mr.kimo
- */
 @Component
 @Slf4j
+/**
+ * @Author: Mr.kimo
+ * @Date: 11:20
+ * @return:
+ * @Param:
+ * @Description: 消费者异步AI生成可视化视频图表
+ */
 public class AccuracyChartConsumer {
+
     @Autowired
     private RedissonClient redissonClient;
 
@@ -42,71 +49,117 @@ public class AccuracyChartConsumer {
     @Autowired
     private AccuracyChartService accuracyChartService;
 
-
-
     @Autowired
     private ChartService chartService;
 
-    private ObjectMapper objectMapper = new ObjectMapper(); // 用于反序列化
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @RabbitHandler
     @RabbitListener(queues = ACCURACY_DIRECT_QUEUE, ackMode = "MANUAL")
-    public void processChart(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
-        // 反序列化 Accuracy 对象
-        Accuracy accuracy = objectMapper.readValue(message, Accuracy.class);
-        long accuracyId = accuracy.getUserId(); // 假设 Accuracy 有一个 getId() 方法
-        String s = String.valueOf(accuracyId);
-        RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + accuracyId);
-        lock.lock();
+    /**
+     * @Author: Mr.kimo
+     * @Date: 11:08
+     * @return: void
+     * @Param: [java.lang.String, com.rabbitmq.client.Channel, long]
+     * @Description: 根据准确率AI生成可视化图表
+     */
+    public void processChart(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
-            QueryWrapper<AccuracyChart> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("user_id", accuracyId);
-            Boolean st = false;
-            AccuracyChart accuracyChart = accuracyChartMapper.selectOne(queryWrapper);
-            if (accuracyChart == null) {
-                st = true;
-                accuracyChart = new AccuracyChart();
-                accuracyChart.setCreateTime(LocalDateTime.now());
-            }
-            if ("succeed".equals(accuracyChart.getStatus())) {
-                log.info("消息体参数 【重复消息】: {}", accuracyChart.getId());
-                return;
+            //方序列化对象
+            Accuracy accuracy = objectMapper.readValue(message, Accuracy.class);
+            long accuracyId = accuracy.getUserId();
+
+            // 锁定当前用户，避免并发问题
+            RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + accuracyId);
+            lock.lock();
+
+            try {
+                AccuracyChart accuracyChart = getAccuracyChart(accuracyId);
+                if (accuracyChart == null) {
+                    accuracyChart = createNewAccuracyChart(accuracyId);
+                }
+
+                if ("succeed".equals(accuracyChart.getStatus())) {
+                    log.info("消息体参数 【重复消息】: {}", accuracyChart.getId());
+                    return;
+                }
+
+                accuracyChart.setStatus("running");
+                accuracyChart.setUpdateTime(LocalDateTime.now());
+
+                // 调用外部服务生成图表数据
+                String chartData = generateChartDataForUser(accuracy, accuracyId);
+                if (chartData == null) {
+                    handleChartUpdateError(accuracyChart.getId(), "图表生成失败");
+                    return;
+                }
+
+                String[] splits = chartData.split("【【【【【");
+                if (splits.length < 3) {
+                    handleChartUpdateError(accuracyChart.getId(), "图表生成格式错误");
+                    return;
+                }
+
+                String genChart = splits[1].trim();
+                String genResult = splits[2].trim();
+
+                // 更新图表信息
+                accuracyChart.setGenChat(genChart);
+                accuracyChart.setGenResult(genResult);
+                accuracyChart.setStatus("succeed");
+
+                saveOrUpdateAccuracyChart(accuracyChart);
+
+                // 确认消息
+                channel.basicAck(deliveryTag, false);
+            } catch (Exception e) {
+                log.error("处理消息时发生错误，错误信息：", e);
+                channel.basicNack(deliveryTag, false, true);
+            } finally {
+                lock.unlock();
             }
 
-            accuracyChart.setStatus("running");
+        } catch (IOException e) {
+            log.error("反序列化消息失败，错误信息：", e);
+        }
+    }
 
-            accuracyChart.setUpdateTime(LocalDateTime.now());
-            GouZiAdditionalMessages gouZiAdditionalMessages = new GouZiAdditionalMessages();
-            gouZiAdditionalMessages.setContent(accuracy.getAccuracy());
-            gouZiAdditionalMessages.setRole("user");
-            gouZiAdditionalMessages.setContent_type("text");
-            String botId = "7432966743104520192";
-            String user = "user";
-            String token = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
-            String chartDataForCouZi = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,s,token);
-            String[] splits = chartDataForCouZi.split("【【【【【");
-            if (splits.length < 3) {
-                handleChartUpdateError(accuracyChart.getId(), "图表生成格式错误");
-                return;
-            }
-            String genChart = splits[1].trim();
-            String genResult = splits[2].trim();
-            accuracyChart.setGenChat(genChart);
-            accuracyChart.setGenResult(genResult);
-            accuracyChart.setStatus("succeed");
-            accuracyChart.setUserId(accuracy.getUserId());
+    private AccuracyChart getAccuracyChart(long accuracyId) {
+        QueryWrapper<AccuracyChart> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", accuracyId);
+        return accuracyChartMapper.selectOne(queryWrapper);
+    }
 
-            if (st){
-                accuracyChartMapper.insert(accuracyChart);
-            }else {
-                accuracyChartMapper.updateById(accuracyChart);
-            }
-            channel.basicAck(deliveryTag, false);
+    private AccuracyChart createNewAccuracyChart(long accuracyId) {
+        AccuracyChart accuracyChart = new AccuracyChart();
+        accuracyChart.setUserId(accuracyId);
+        accuracyChart.setCreateTime(LocalDateTime.now());
+        return accuracyChart;
+    }
+
+    private String generateChartDataForUser(Accuracy accuracy, long accuracyId) {
+        GouZiAdditionalMessages gouZiAdditionalMessages = new GouZiAdditionalMessages();
+        gouZiAdditionalMessages.setContent(accuracy.getAccuracy());
+        gouZiAdditionalMessages.setRole("user");
+        gouZiAdditionalMessages.setContent_type("text");
+
+        String botId = ACCURACY_CHART_BOT_ID;
+        String user = accuracy.getUserId().toString();
+        String token = ACCURACY_CHART_BOT_TOKEN;
+
+        try {
+            return chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages, null, botId, user, String.valueOf(accuracyId), token);
         } catch (Exception e) {
-            log.error(e.getMessage());
-            channel.basicNack(deliveryTag, false, true);
-        } finally {
-            lock.unlock();
+            handleChartUpdateError(accuracyId, "AI生成错误");
+        }
+        return null;
+    }
+
+    private void saveOrUpdateAccuracyChart(AccuracyChart accuracyChart) {
+        if (accuracyChart.getId() == null) {
+            accuracyChartMapper.insert(accuracyChart);
+        } else {
+            accuracyChartMapper.updateById(accuracyChart);
         }
     }
 

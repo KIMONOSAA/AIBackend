@@ -34,6 +34,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static com.kimo.constans.CouZiConstant.*;
+
 /**
  * AI设定角色图表BI
  *
@@ -228,38 +230,19 @@ public class ChartController {
     }
 
 
-//    /**
-//     * 智能分析异步
-//     * @return
-//     */
-//    @PostMapping("/gen/chatdata/async")
-//    public String genChartData(@RequestBody ChartDataRequest chartData)  {
-//
-//        String biResponse = null;
-//        try {
-//            biResponse = chartService.getChartData(chartData);
-//        } catch (Exception e) {
-//            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-//        }
-//
-//        return biResponse;
-//    }
-
     /**
      * 使用扣子可视化视图
      * @return
      */
     @PostMapping("/gen/couzi/async")
     public BaseResponse<String> getChartDataForCouZi(@RequestBody GouZiAdditionalMessages chartData,HttpServletRequest request)  {
-
-
-        String botId = "7432966743104520192";
-        String user = "user";
-        String token = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
+        String botId = ACCURACY_CHART_BOT_ID;
+        String token = ACCURACY_CHART_BOT_TOKEN;
         String biResponse = null;
         try {
             Long loginUser = chartService.getLoginUser(request);
             String userId = String.valueOf(loginUser);
+            String user = loginUser.toString();
             biResponse = chartService.getChartDataForCouZiChartAndFileData(chartData,null,botId,user,userId,token);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
@@ -276,9 +259,8 @@ public class ChartController {
     public BaseResponse<String> getCourseInfoDataForCouZi(@RequestBody GouZiAdditionalMessages chartData,@PathVariable("courseId") Long courseId,HttpServletRequest request)  {
         String courseIId = String.valueOf(courseId);
         String title = "总结课程";
-        String botId = "7436587258616348712";
-//        String user = "user";
-        String token = "pat_qlj1MPjOw6Z9BsaSCqHS0gLKPQoya6XWIR3poLgG9MZbvtsQXsXLLUJPkIJ34GHX";
+        String botId = COURSE_BOT_ID;
+        String token = COURSE_BOT_TOKEN;
         ThrowUtils.throwIf(courseIId.isBlank(), ErrorCode.ADD_DATABASE_ERROR);
         Map<String, String> courseInfoDataForCouZi = null;
         try {
@@ -316,9 +298,8 @@ public class ChartController {
     @PostMapping("/gen/couzi/pic/data")
     public BaseResponse<String> getPicResultForCouZiForData(@RequestBody CouZiMessageAndMasterRequest gouZiAdditionalMessagesAndMaster, HttpServletRequest request)  {
         String courseIId = "65";
-        String botId = "7436728231417544739";
-//        String user = "user";
-        String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
+        String botId = AI_PIC_BOT_ID;
+        String token = AI_PIC_BOT_TOKEN;
         GouZiAdditionalMessages gouZiAdditionalMessages = new GouZiAdditionalMessages();
         gouZiAdditionalMessages.setRole(gouZiAdditionalMessagesAndMaster.getRole());
         gouZiAdditionalMessages.setContent_type(gouZiAdditionalMessagesAndMaster.getContent_type());

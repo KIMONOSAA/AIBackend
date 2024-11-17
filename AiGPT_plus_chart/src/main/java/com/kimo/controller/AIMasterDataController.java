@@ -30,6 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+import static com.kimo.constans.CouZiConstant.AI_QUESTION_AND_ANSWER_BOT_ID;
+import static com.kimo.constans.CouZiConstant.AI_QUESTION_AND_ANSWER_BOT_TOKEN;
+
 
 /**
  *
@@ -51,25 +54,23 @@ public class AIMasterDataController {
     private AIMasterdataMapper aiMasterdataMapper;
 
 
-//    @Autowired
-//    private Executor executor;
 
-    // region 增删改查
 
-    /**
-     * AI问答
-     *
-     * @param aiMasterDataAddRequest
-     * @param
-     * @return
-     */
+
     @PostMapping("/add/ai/master/data")
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:05
+     * @return: com.kimo.common.BaseResponse<com.kimo.model.dto.po.AIMasterData>
+     * @Param: [com.kimo.model.dto.chart.AIMasterDataAddRequest, jakarta.servlet.http.HttpServletRequest]
+     * @Description: AI问答
+     */
     public BaseResponse<AIMasterData> addAiMasterData(@RequestBody AIMasterDataAddRequest aiMasterDataAddRequest, HttpServletRequest request) throws Exception {
         AIMasterData aiMasterData = new AIMasterData();
         BeanUtils.copyProperties(aiMasterDataAddRequest, aiMasterData);
-        String botId = "7433646386040160268";
+        String botId = AI_QUESTION_AND_ANSWER_BOT_ID;
         String user = "user";
-        String token = "pat_bU9pga0uXTGH8nHAwZ8QkIISSNiIvTPS580NZW8DjEdndxNx8BouusYhjpYMlJPN";
+        String token = AI_QUESTION_AND_ANSWER_BOT_TOKEN;
         // 校验
         Map<String,String> AIResult =  aiMasterDataService.getChartDataForCouZiChart(aiMasterData, request,botId,user,token);
         if(StringUtils.isBlank(aiMasterData.getUserTitle())){
@@ -81,13 +82,15 @@ public class AIMasterDataController {
 
 
 
-    /**
-     * AI问答信息列表
-     *
-     * @param aiMasterDataQueryRequest
-     * @return
-     */
+
     @PostMapping("/list/aiRole/ai/master/data")
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:05
+     * @return: com.kimo.common.BaseResponse<com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.kimo.model.dto.po.AIMasterData>>
+     * @Param: [com.kimo.model.dto.chart.AIMasterDataQueryRequest, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 列出当前用户的所以与AI交互的信息分页获取
+     */
     public BaseResponse<Page<AIMasterData>> listAiMasterDataByPage(@RequestBody AIMasterDataQueryRequest aiMasterDataQueryRequest, HttpServletRequest request) {
         long current = aiMasterDataQueryRequest.getCurrent();
         long size = aiMasterDataQueryRequest.getPageSize();

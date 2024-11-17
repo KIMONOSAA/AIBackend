@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kimo.common.ErrorCode;
 import com.kimo.config.WebSocketHandler;
 import com.kimo.constant.CommonConstant;
@@ -16,6 +17,7 @@ import com.kimo.domain.GouZiAdditionalMessages;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
+import com.kimo.listener.CouZiEventSourceListener;
 import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.mapper.PointMapper;
@@ -53,8 +55,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import static com.kimo.constans.CouZiConstant.COU_ZI_ZPI_HOST;
 import static com.kimo.constant.Constants.PointNumber;
 import static com.kimo.constants.CouZiConstant.BEARER;
+import static com.kimo.utils.YouBanUtils.*;
 
 
 /**
@@ -96,92 +100,83 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
 
 
     @Override
-    public Map<String,String> getChartDataForCouZiChart(AIMasterData chartData, HttpServletRequest request, String botId, String user, String token) throws Exception {
-        HashMap<String, String> objectObjectHashMap = new HashMap<>();
-        UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
-        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
-        Long userId = userDtoForRedisOrLock.getId();
-        chartData.setUserId(userId);
-        objectObjectHashMap.put("userId", String.valueOf(userId));
-        aiMessageSessionService.fetchUpdatePoint(PointNumber,userId);
-        List<String> answerContents = new ArrayList<>();
-        String lastAnswerContent = null;
-        // 1. 创建参数
-        ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
-        GouZiAdditionalMessages goZeAdditionalMessages = new GouZiAdditionalMessages();
-        goZeAdditionalMessages.setContent(chartData.getUserTitle());
-        goZeAdditionalMessages.setRole("user");
-        goZeAdditionalMessages.setContent_type("text");
-        goZeAdditionalMessages1.add(goZeAdditionalMessages);
-        // 1. 创建参数
-        CouZiCompletionRequest chatCompletion = CouZiCompletionRequest
-                .builder()
-                .stream(true)
-                .userId(user)
-                .chatHistory(true)
-                .botId(botId)
-                .AdditionalMessages(goZeAdditionalMessages1)
-                .build();
-        // 2. 发起请求
-        // 1. 配置文件
-        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
-        yuanQiConfiguration.setApiHost("https://api.coze.cn/");
-        yuanQiConfiguration.setApiKey(BEARER + token);
-        yuanQiConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
-        // 2. 会话工厂
-        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
-        // 3. 开启会话
-        this.coZeSession = factory.openSession();
-        log.info("openAiSession:{}", coZeSession);
-        // 2. 请求等待
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        EventSource eventSource = coZeSession.chatCompletions(token,null,chatCompletion, new EventSourceListener() {
-            @Override
-            public void onEvent(@NotNull EventSource eventSource, String id, String type, @NotNull String data) {
-                try {
-                    CouZiCompletionEventResponse response = JSONUtil.toBean(data, CouZiCompletionEventResponse.class);
-
-//                    couZiCompletionEventResponses.add(response.getContent());
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType()) && response.getCreatedAt() == null) {
-                        // 存储 content
-                        webSocketHandler.sendMessageToUser(userId.toString(), response.getContent());
-                    }
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
-                        // 存储 content
-                        answerContents.add(response.getContent());
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            @Override
-            public void onClosed(EventSource eventSource) {
-                log.info("对话完成");
-                countDownLatch.countDown();
-            }
-
-
-            @Override
-            public void onFailure(EventSource eventSource, Throwable t, Response response) {
-                countDownLatch.countDown();
-//                log.error("错误: {}, {}", response.code(), t.getMessage());
-            }
-        });
-        countDownLatch.await();
-        if (!answerContents.isEmpty()) {
-            lastAnswerContent = answerContents.get(answerContents.size() - 1);
-        }
-        objectObjectHashMap.put("aiData", lastAnswerContent);
-        return objectObjectHashMap;
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:03 
+     * @return: java.util.Map<java.lang.String,java.lang.String>
+     * @Param: [com.kimo.model.dto.po.AIMasterData, jakarta.servlet.http.HttpServletRequest, java.lang.String, java.lang.String, java.lang.String]
+     * @Description: 调用扣子进行AI问答并实现实时通信
+     */
+    public Map<String, String> getChartDataForCouZiChart(AIMasterData chartData, HttpServletRequest request, String botId, String user, String token) throws Exception {
+        // 更具描述性的变量名
+        HashMap<String, String> resultMap = new HashMap<>();
+        extractedCouZiResults(chartData, request, botId, user, token, resultMap);
+        return resultMap;
     }
 
+    private void extractedCouZiResults(AIMasterData chartData, HttpServletRequest request, String botId, String user, String token, HashMap<String, String> resultMap) throws JsonProcessingException, InterruptedException {
+        // 获取用户数据
+        UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null, ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        chartData.setUserId(userId);
+        resultMap.put("userId", String.valueOf(userId));
+        aiMessageSessionService.fetchUpdatePoint(PointNumber, userId);
+
+        List<String> answerContents = new ArrayList<>();
+        String lastAnswerContent = null;
+
+        // 1. 创建请求参数
+        GouZiAdditionalMessages goZeAdditionalMessages = createGouZiAdditionalMessages(chartData);
+        ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
+        goZeAdditionalMessages1.add(goZeAdditionalMessages);
+
+        // 2. 创建并配置请求
+        CouZiCompletionRequest couZiCompletionRequest = CreateCouZiCompletionRequest(true, user, true, botId, goZeAdditionalMessages1);
+        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
+        configExtracted(token, yuanQiConfiguration);
+
+        // 3. 创建会话工厂
+        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
+        this.coZeSession = factory.openSession();
+        log.info("openAiSession:{}", coZeSession);
+
+        // 4. 使用 CountDownLatch 等待异步结果
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        CouZiEventSourceListener couZiEventSourceListener = new CouZiEventSourceListener(userId, webSocketHandler, answerContents, countDownLatch);
+
+        EventSource eventSource = coZeSession.chatCompletions(token, null, couZiCompletionRequest, couZiEventSourceListener);
+        couZiEventSourceListener.getCountDownLatch().await();
+
+        // 获取最终的回答内容
+        if (!couZiEventSourceListener.getAnswerContents().isEmpty()) {
+            lastAnswerContent = couZiEventSourceListener.getAnswerContents().get(couZiEventSourceListener.getAnswerContents().size() - 1);
+        }
+        resultMap.put("aiData", lastAnswerContent);
+    }
+
+
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:06
+     * @return: void
+     * @Param: [java.util.Map<java.lang.String,java.lang.String>, java.lang.String]
+     * @Description: 是否有创建会话，没有就创建给，返回true，然后创建AI问答
+     */
     public void IsAiMessagesessionForCourse(Map<String,String> map,String data) {
         Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
         ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
         createAiMasterData(map, data,null);
     }
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:07
+     * @return:
+     * @Param:
+     * @Description: 创建AI问答的数据信息
+     */
     private AIMasterData createAiMasterData(Map<String,String> map, String data, MultipartFile file){
         long userId = Long.parseLong(map.get("userId"));
         QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
@@ -215,6 +210,14 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
         return aiMasterData;
     }
 
+
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:07
+     * @return:
+     * @Param:
+     * @Description: 判断是否有会话
+     */
     private Boolean IsBooleanAiMessageSession(Map<String,String> map,String title){
         long userId = Long.parseLong(map.get("userId"));
         QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
@@ -235,6 +238,13 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
 
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:08
+     * @return: com.baomidou.mybatisplus.core.conditions.Wrapper<com.kimo.model.dto.po.AIMasterData>
+     * @Param: [com.kimo.model.dto.chart.AIMasterDataQueryRequest, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 分页列出所以用户问答数据
+     */
     public Wrapper<AIMasterData> getQueryWrapper(AIMasterDataQueryRequest aiMasterDataQueryRequest, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
@@ -254,16 +264,6 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
-    }
-
-    private synchronized void increase(UserDto user){
-        QueryWrapper<Point> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(SqlConstants.USER_ID,user.getId());
-        Point point = pointMapper.selectOne(queryWrapper);
-        ThrowUtils.throwIf(point == null,ErrorCode.OPERATION_ERROR);
-        ThrowUtils.throwIf(point.getPoint() < 5,ErrorCode.OPERATION_ERROR);
-        point.setPoint(point.getPoint() - 5);
-        pointMapper.updateById(point);
     }
 
 }

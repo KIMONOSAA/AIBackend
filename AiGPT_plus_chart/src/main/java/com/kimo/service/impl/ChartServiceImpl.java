@@ -1,14 +1,12 @@
 package com.kimo.service.impl;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kimo.amqp.ChartProducer;
 import com.kimo.common.ErrorCode;
-import com.kimo.config.AIMessageHandler;
 import com.kimo.config.WebSocketHandler;
 import com.kimo.constant.ChartConstant;
 import com.kimo.constant.CommonConstant;
@@ -18,6 +16,7 @@ import com.kimo.domain.*;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
+import com.kimo.listener.CouZiEventSourceListener;
 import com.kimo.manager.RedisLimiterManager;
 import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.AIMessageSessionMapper;
@@ -39,20 +38,16 @@ import com.kimo.utils.SqlUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.sse.EventSource;
-import okhttp3.sse.EventSourceListener;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.sql.rowset.serial.SerialBlob;
-import java.io.IOException;
 import java.sql.Blob;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -61,6 +56,7 @@ import java.util.concurrent.CountDownLatch;
 import static com.kimo.constant.Constants.PointNumber;
 import static com.kimo.constants.CouZiConstant.BEARER;
 import static com.kimo.utils.ExcelUtils.excelToCsv;
+import static com.kimo.utils.YouBanUtils.*;
 
 /**
  * @author Mr.kimo
@@ -139,75 +135,31 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
 
     private String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String userId,String token) throws Exception {
-        CouZiCompletionRequest chatCompletion = null;
         ArrayList<CouZiCompletionEventResponse> couZiCompletionEventResponses = new ArrayList<>();
         List<String> answerContents = new ArrayList<>();
         String lastAnswerContent = null;
+        //减去积分
+        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
         // 1. 创建参数
         ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
         goZeAdditionalMessages1.add(chartData);
         // 1. 创建参数
-        //todo 有冗余要封装方法
-        chatCompletion = CouZiCompletionRequest
-                .builder()
-                .stream(true)
-                .userId(user)
-                .chatHistory(true)
-                .botId(botId)
-                .AdditionalMessages(goZeAdditionalMessages1)
-                .build();
-        // 2. 发起请求
+        CouZiCompletionRequest couZiCompletionRequest = CreateCouZiCompletionRequest(true, user, true, botId, goZeAdditionalMessages1);
         // 2. 发起请求
         CoZeConfiguration youbangConfiguration = new CoZeConfiguration();
-        youbangConfiguration.setApiHost("https://api.coze.cn/");
-        youbangConfiguration.setApiKey(BEARER + token);
-        youbangConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        configExtracted(token, youbangConfiguration);
         // 2. 会话工厂
         DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(youbangConfiguration);
         // 3. 开启会话
         this.coZeSession = factory.openSession();
         // 2. 请求等待
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        EventSource eventSource = coZeSession.chatCompletions(null,null,chatCompletion, new EventSourceListener() {
-            @Override
-            public void onEvent(@NotNull EventSource eventSource, String id, String type, @NotNull String data) {
-                try {
-                    CouZiCompletionEventResponse response = JSONUtil.toBean(data, CouZiCompletionEventResponse.class);
-
-
-                    log.info("返回内容: {}", response.toString());
-//                    couZiCompletionEventResponses.add(response.getContent());
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType()) && response.getCreatedAt() == null) {
-                        // 存储 content
-                        // 假设从 AI 获取的响应内容是 aiResponseContent，用户 ID 是 clientId
-                        webSocketHandler.sendMessageToUser(userId, response.getContent());
-                    }
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
-                        // 存储 content
-                        answerContents.add(response.getContent());
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            @Override
-            public void onClosed(EventSource eventSource) {
-                log.info("对话完成");
-                countDownLatch.countDown();
-            }
-
-
-            @Override
-            public void onFailure(EventSource eventSource, Throwable t, Response response) {
-                countDownLatch.countDown();
-//                log.error("错误: {}, {}", response.code(), t.getMessage());
-            }
-        });
-        countDownLatch.await();
-        if (!answerContents.isEmpty()) {
-            lastAnswerContent = answerContents.get(answerContents.size() - 1);
-            // 这里可以使用 lastAnswerContent，例如输出
-            System.out.println("最后的内容: " + lastAnswerContent);
+        CouZiEventSourceListener couZiEventSourceListener = new CouZiEventSourceListener(Long.parseLong(userId), webSocketHandler, answerContents, countDownLatch);
+        EventSource eventSource = coZeSession.chatCompletions(null,null,couZiCompletionRequest,couZiEventSourceListener);
+        couZiEventSourceListener.getCountDownLatch().await();
+        // 获取最终的回答内容
+        if (!couZiEventSourceListener.getAnswerContents().isEmpty()) {
+            lastAnswerContent = couZiEventSourceListener.getAnswerContents().get(couZiEventSourceListener.getAnswerContents().size() - 1);
         }
         return lastAnswerContent;
     }
@@ -217,84 +169,33 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     public String getChartDataForCouZiChartForFileData(CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception {
         List<String> answerContents = new ArrayList<>();
         String lastAnswerContent = null;
+        //减去积分
+        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
         // 1. 创建参数
-        ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
         ArrayList<CouZiAdditionalFileMessage> goZiAdditionalFileMessage = new ArrayList<>();
-        CouZiCompletionRequest chatCompletion = null;
-        CouZiCompletionFileRequest chatCompletionFile = null;
-
         goZiAdditionalFileMessage.add(fileData);
-        chatCompletionFile = CouZiCompletionFileRequest
-                .builder()
-                .stream(true)
-                .userId(user)
-                .chatHistory(true)
-                .botId(botId)
-                .AdditionalMessages(goZiAdditionalFileMessage)
-                .build();
+        CouZiCompletionFileRequest chatCompletionFile = CreateCouZiCompletionFileRequest(true, user, true, botId, goZiAdditionalFileMessage);
 
         // 2. 发起请求
         CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
-        yuanQiConfiguration.setApiHost("https://api.coze.cn/");
-        yuanQiConfiguration.setApiKey(BEARER + token);
-        yuanQiConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        configExtracted(token, yuanQiConfiguration);
         // 2. 会话工厂
         DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
         // 3. 开启会话
         this.coZeSession = factory.openSession();
         // 2. 请求等待
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        EventSource eventSource = coZeSession.chatCompletions(token,null,chatCompletionFile, new EventSourceListener() {
-            @Override
-            public void onEvent(@NotNull EventSource eventSource, String id, String type, @NotNull String data) {
-                try {
-                    CouZiCompletionEventResponse response = JSONUtil.toBean(data, CouZiCompletionEventResponse.class);
-
-                    String responseBody = response.getContent();  // 获取响应体内容
-                    System.out.println("Response Body: " + responseBody);  // 打印响应内容
-//                    couZiCompletionEventResponses.add(response.getContent());
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
-                        // 存储 content
-                        webSocketHandler.sendMessageToUser(userId, response.getContent());
-                    }
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
-                        // 存储 content
-                        answerContents.add(response.getContent());
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            @Override
-            public void onClosed(EventSource eventSource) {
-                log.info("对话完成" + eventSource.request().body().toString());
-                log.info("对话完成");
-                countDownLatch.countDown();
-            }
-
-
-            @Override
-            public void onFailure(EventSource eventSource, Throwable t, Response response) {
-                countDownLatch.countDown();
-                log.error("错误: {}, {}", response.code(), t.getMessage());
-            }
-        });
+        CouZiEventSourceListener couZiEventSourceListener = new CouZiEventSourceListener(Long.parseLong(userId), webSocketHandler, answerContents, countDownLatch);
+        EventSource eventSource = coZeSession.chatCompletions(token,null,chatCompletionFile,couZiEventSourceListener);
         countDownLatch.await();
-        if (!answerContents.isEmpty()) {
-            lastAnswerContent = answerContents.get(answerContents.size() - 1);
+        couZiEventSourceListener.getCountDownLatch().await();
+        // 获取最终的回答内容
+        if (!couZiEventSourceListener.getAnswerContents().isEmpty()) {
+            lastAnswerContent = couZiEventSourceListener.getAnswerContents().get(couZiEventSourceListener.getAnswerContents().size() - 1);
         }
         return lastAnswerContent;
     }
 
-
-
-
-//    @Override
-//    public String getChartData(String chartData) throws Exception {
-//        ChartDataRequest chartDataRequest = new ChartDataRequest();
-//        chartDataRequest.setChartData(chartData);
-//        return this.getChartData(chartDataRequest);
-//    }
 
     @Override
     public Boolean deletedChart(HttpServletRequest request) {

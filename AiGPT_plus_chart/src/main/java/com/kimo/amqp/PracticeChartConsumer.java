@@ -29,16 +29,24 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.Map;
 
+import static com.kimo.constans.CouZiConstant.PRACTICE_CHART_BOT_ID;
+import static com.kimo.constans.CouZiConstant.PRACTICE_CHART_BOT_TOKEN;
 import static com.kimo.constant.RabbitMQConstant.PRACTICE_DIRECT_QUEUE;
-/**
- * @author Mr.kimo
- */
+
 @Component
 @Slf4j
+/**
+ * @Author: Mr.kimo
+ * @Date: 10:57
+ * @return:
+ * @Param:
+ * @Description: 根据学生练习记录AI生成评估
+ */
 public class PracticeChartConsumer {
     @Autowired
     private RedissonClient redissonClient;
@@ -54,43 +62,65 @@ public class PracticeChartConsumer {
     @RabbitHandler
     @RabbitListener(queues = PRACTICE_DIRECT_QUEUE, ackMode = "MANUAL")
     public void processChart(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
-        // 反序列化 Accuracy 对象
-        Map<String, String> receivedMessage = objectMapper.readValue(message, new TypeReference<Map<String, String>>() {});
-
-        // 提取单独的 JSON 数据
-        String chartDataRequestJson = receivedMessage.get("chartDataRequest");
-        String practiceRecordJson = receivedMessage.get("practiceRecord");
-
-        ChartDataRequest oldChartDataRequest = objectMapper.readValue(chartDataRequestJson, ChartDataRequest.class);
-        PracticeRecordDto oldPracticeRecord = objectMapper.readValue(practiceRecordJson, PracticeRecordDto.class);
-        String userId = oldPracticeRecord.getUserId().toString();
-        ThrowUtils.throwIf(oldChartDataRequest == null, ErrorCode.NOT_LOGIN_ERROR);
-        ThrowUtils.throwIf(oldPracticeRecord == null,ErrorCode.NOT_LOGIN_ERROR);
-        long recordId = oldPracticeRecord.getId(); // 假设 Accuracy 有一个 getId() 方法
-        PracticeRecord newPracticeRecord = new PracticeRecord();
-        ChartDataRequest chartDataRequest = new ChartDataRequest();
-        PracticeRecordPro practiceRecordPro = new PracticeRecordPro();
-        BeanUtils.copyProperties(oldPracticeRecord, practiceRecordPro);
-        BeanUtils.copyProperties(oldChartDataRequest, chartDataRequest);
-        GouZiAdditionalMessages gouZiAdditionalMessages = new GouZiAdditionalMessages();
-        gouZiAdditionalMessages.setRole("user");
-        gouZiAdditionalMessages.setContent(chartDataRequest.getChartData());
-        gouZiAdditionalMessages.setContent_type("text");
-        String botId = "7433801236367556627";
-        String user = "user";
-        String token = "pat_NLRWUk2TjsJT8Q7EwIIafUfOIBzUPuMzeaQJRWcnW16wHc3hbAKbRggidi0tH1Xm";
-        RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + recordId);
-        lock.lock();
-        try {
-            String chartData = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages,null,botId,user,userId,token);
-            practiceRecordPro.setAiresult(chartData);
-            practiceRecordProMapper.insert(practiceRecordPro);
-            channel.basicAck(deliveryTag, false);
-        } catch (Exception e) {
-            log.error(e.getMessage());
+        if (StringUtils.isEmpty(message)) {
+            log.error("收到空消息");
             channel.basicNack(deliveryTag, false, true);
-        } finally {
-            lock.unlock();
+            return;
+        }
+
+        try {
+            // 反序列化并进行空值检查
+            Map<String, String> receivedMessage = objectMapper.readValue(message, new TypeReference<Map<String, String>>() {});
+            String chartDataRequestJson = receivedMessage.get("chartDataRequest");
+            String practiceRecordJson = receivedMessage.get("practiceRecord");
+
+            if (StringUtils.isEmpty(chartDataRequestJson) || StringUtils.isEmpty(practiceRecordJson)) {
+                log.error("收到不完整的数据：chartDataRequest 或 practiceRecord 缺失");
+                channel.basicNack(deliveryTag, false, true);
+                return;
+            }
+
+            ChartDataRequest oldChartDataRequest = objectMapper.readValue(chartDataRequestJson, ChartDataRequest.class);
+            PracticeRecordDto oldPracticeRecord = objectMapper.readValue(practiceRecordJson, PracticeRecordDto.class);
+            String userId = oldPracticeRecord.getUserId().toString();
+
+            // 业务校验
+            ThrowUtils.throwIf(oldChartDataRequest == null, ErrorCode.NOT_LOGIN_ERROR);
+            ThrowUtils.throwIf(oldPracticeRecord == null, ErrorCode.NOT_LOGIN_ERROR);
+
+            long recordId = oldPracticeRecord.getId();
+            PracticeRecordPro practiceRecordPro = new PracticeRecordPro();
+            BeanUtils.copyProperties(oldPracticeRecord, practiceRecordPro);
+
+            ChartDataRequest chartDataRequest = new ChartDataRequest();
+            BeanUtils.copyProperties(oldChartDataRequest, chartDataRequest);
+
+            GouZiAdditionalMessages gouZiAdditionalMessages = new GouZiAdditionalMessages();
+            gouZiAdditionalMessages.setRole("user");
+            gouZiAdditionalMessages.setContent(chartDataRequest.getChartData());
+            gouZiAdditionalMessages.setContent_type("text");
+
+            String botId = PRACTICE_CHART_BOT_ID;
+            String user = oldPracticeRecord.getUserId().toString();
+            String token = PRACTICE_CHART_BOT_TOKEN;
+
+            // 使用锁仅锁定必要部分
+            RLock lock = redissonClient.getLock(RedisConstant.USER_INFO_ID_PRE + recordId);
+            lock.lock();
+            try {
+                String chartData = chartService.getChartDataForCouZiChartAndFileData(gouZiAdditionalMessages, null, botId, user, userId, token);
+                practiceRecordPro.setAiresult(chartData);
+                practiceRecordProMapper.insert(practiceRecordPro);
+                channel.basicAck(deliveryTag, false);
+            } catch (Exception e) {
+                log.error("处理 recordId： {} 的图表数据时出错。异常：{}", recordId, e.getMessage());
+                channel.basicNack(deliveryTag, false, true);
+            } finally {
+                lock.unlock();
+            }
+        } catch (IOException e) {
+            log.error("反序列化消息 {} 时出错", e.getMessage());
+            channel.basicNack(deliveryTag, false, true);
         }
     }
 
