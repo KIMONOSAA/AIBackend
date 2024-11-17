@@ -3,6 +3,7 @@ package com.kimo.ucenter.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.kimo.ucenter.model.po.Token;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,6 +22,8 @@ public interface TokenMapper extends BaseMapper<Token> {
     Token findByToken(String jwt);
 
     List<Token> findAllValidTokenByUser(Long id);
+
+    int batchUpdateStatusToExpiredAndRevoked(@Param("tokenIds") List<Long> tokenIds);
 
 }
 

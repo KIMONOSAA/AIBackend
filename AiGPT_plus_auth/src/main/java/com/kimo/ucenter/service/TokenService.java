@@ -8,10 +8,12 @@ import com.kimo.ucenter.model.dto.UserDto;
 import java.util.List;
 
 /**
-* @author Administrator
-* @description 针对表【token(令牌)】的数据库操作Service
-* @createDate 2024-05-25 12:24:15
-*/
+ * @Author: Mr.kimo
+ * @Date: 10:48
+ * @return:
+ * @Param:
+ * @Description:
+ */
 public interface TokenService extends IService<Token> {
 
     void executeRevokeAllUserToken(UserDto userDto);

@@ -17,13 +17,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 会员接口
- * @author Mr.kimo
- */
+
 @RestController
 @RequestMapping("/auth")
 @Slf4j
+/**
+ * @Author kimo
+ * @Description  当前模块没有写完整
+ * @Date
+ * @Param
+ * @param null
+ * @return
+ * @return null
+ **/
 public class UserMemberController {
 
     @Autowired
@@ -31,7 +37,6 @@ public class UserMemberController {
 
     /**
      * 分页获取会员类型列表
-     * 前端未实现
      * @param
      * @param request
      * @return

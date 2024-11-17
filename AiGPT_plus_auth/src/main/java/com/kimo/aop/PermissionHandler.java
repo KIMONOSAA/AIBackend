@@ -26,6 +26,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.List;
 
+/**
+ * @Author kimo
+ * @Description  权限处理AOP
+ **/
 @Aspect
 @Component
 @Slf4j

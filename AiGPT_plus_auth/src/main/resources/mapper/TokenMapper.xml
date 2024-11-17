@@ -31,4 +31,14 @@
                  inner join user u on t.user_id = u.id -- 假设Token表中有一个user_id字段与User表的id字段关联
         where u.id = #{id} and (t.expired = 0 or t.revoked = 0) -- 假设expired和revoked字段是布尔类型，在数据库中存储为0或1
     </select>
+
+
+    <update id="batchUpdateStatusToExpiredAndRevoked">
+        UPDATE token
+        SET expired = true, revoked = true
+        WHERE id IN
+        <foreach item="id" collection="tokenIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper>

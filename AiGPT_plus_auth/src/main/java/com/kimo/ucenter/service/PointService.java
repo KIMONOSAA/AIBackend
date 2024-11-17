@@ -5,14 +5,31 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.kimo.ucenter.model.po.Point;
 
 /**
-* @author chen
-* @description 针对表【point(积分表)】的数据库操作Service
-* @createDate 2024-10-25 00:16:42
-*/
+ * @Author kimo
+ * @Description  分数服务
+ * @Date
+ * @Param
+ * @return
+ * @return null
+ **/
 public interface PointService extends IService<Point> {
-
+    /**
+     * @Author kimo
+     * @Description  更新分数
+     * @Date
+     * @Param point userId
+     * @return null
+     **/
     Boolean updatePoint(Long userId, Long point);
 
+
+    /**
+     * @Author kimo
+     * @Description
+     * @Date
+     * @param userId
+     * @return Boolean
+     **/
     Boolean addPoint(Long userId);
 }
 

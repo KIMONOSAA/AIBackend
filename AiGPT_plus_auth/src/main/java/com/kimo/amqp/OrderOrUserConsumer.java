@@ -26,6 +26,12 @@ import java.io.IOException;
 
 import static com.kimo.constant.RabbitMQConstant.PAYNOTIFY_QUEUE;
 
+
+/**
+ * @Author kimo
+ * @Description 监听订单成功后生产者发送消息
+ * @Date
+ **/
 @Component
 @Slf4j
 public class OrderOrUserConsumer {
@@ -37,6 +43,7 @@ public class OrderOrUserConsumer {
 
     @Autowired
     private RedissonClient redissonClient;
+
 
 
     @RabbitHandler

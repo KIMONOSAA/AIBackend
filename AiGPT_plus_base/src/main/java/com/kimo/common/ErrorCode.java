@@ -69,7 +69,8 @@ public enum ErrorCode {
     NEW_VIDEO_FILE_ERROR(10007,"视频转换时新建输出文件失败"),
     VIDEO_NOT_FORMAT(10008,"无法解析的视频格式"),
     VIDEO_CONVERSION_ERROR(10009,"视频转换视频"),
-    FILE_CHUNK_ERROR(50007, "上传分块失败");
+    FILE_CHUNK_ERROR(50007, "上传分块失败"),
+    INVALID_INPUT_ERROR(50008, "无效的输入"), UPDATE_FAILED(50008, "更新失败");
 
 
     /**

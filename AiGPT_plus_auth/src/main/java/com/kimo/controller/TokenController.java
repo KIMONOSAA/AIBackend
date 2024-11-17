@@ -5,7 +5,6 @@ import com.kimo.ucenter.model.dto.UserDto;
 import com.kimo.ucenter.model.po.Token;
 import com.kimo.ucenter.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +20,7 @@ public class TokenController {
     public Token findByToken(String jwt){
         return tokenService.findByToken(jwt);
     }
+
     @PostMapping("/findalluser")
     public List<Token> findAllValidTokenByUser(Long id){
         return tokenService.findAllValidTokenByUser(id);

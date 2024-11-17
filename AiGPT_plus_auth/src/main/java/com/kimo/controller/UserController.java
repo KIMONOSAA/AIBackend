@@ -14,14 +14,10 @@ import com.kimo.ucenter.model.dto.UserDto;
 import com.kimo.ucenter.service.PointService;
 import com.kimo.ucenter.service.UserService;
 import com.kimo.ucenter.model.po.User;
-
 import java.io.IOException;
 import java.util.Optional;
-
-
 import com.kimo.utils.RedisVerificationUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -36,15 +32,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * 用户接口
- *
- * @author Mr.kimo
- *
- */
+
 @RestController
 @RequestMapping("/auth")
 @Slf4j
+/**
+ * @Author kimo
+ * @Description  用户模块
+ * @Date
+ * @Param
+ * @param null
+ * @return
+ * @return null
+ **/
 public class UserController {
 
     @Autowired
@@ -63,17 +63,11 @@ public class UserController {
     private PointService pointService;
 
 
-    @PostMapping("/insert")
-    public int insertUser(User user){
+//    @PostMapping("/findemail")
+//    public UserLocalDto findByEmail(String username){
+//        return  userService.findByEmail(username);
+//    }
 
-        return userService.insertUser(user);
-    }
-
-
-    @PostMapping("/findemail")
-    public UserLocalDto findByEmail(String username){
-        return  userService.findByEmail(username);
-    }
     /**
      * 注册
      * @param multipartFile
@@ -129,10 +123,6 @@ public class UserController {
         return isEnable.equals(CommonConstant.IS_TRUE) ? ResultUtils.success(isEnable) : ResultUtils.error(ErrorCode.EMAIL_ERROR,"验证失败");
     }
 
-//    @RequestMapping("/r/r1")
-//    public String r1(){
-//        return "访问r1资源";
-//    }
 
     /**
      * 登录
@@ -147,22 +137,7 @@ public class UserController {
 
 
 
-    //todo 暂未实现
-    @GetMapping("/signCount")
-    public BaseResponse<Integer> getSignUserCount(HttpServletRequest request){
-        Integer isSign = userService.signUserCount(request);
-        return ResultUtils.success(isSign);
-    }
 
-
-
-    //todo 暂未实现
-    @PostMapping("/vip")
-    public BaseResponse<Boolean> settingUserIsVIP(HttpServletRequest request){
-        Boolean isVIP = userService.settingUserIsVIP(request);
-
-        return ResultUtils.success(isVIP);
-    }
 
 
     /**
@@ -214,35 +189,38 @@ public class UserController {
     }
 
     /**
-     *
-     *
+     * @Author kimo
+     * @Description 根据请求头获取JWT用户信息 //todo (改为AOP全局加ConCourrentHashMap（ThreadLocal）)
+     * @Date
+     * @Param
      * @param request
-     * @return
-     */
+     * @return com.kimo.ucenter.model.dto.UserDto
+     **/
     @PostMapping("/gobalget/login")
     public UserDto GobalGetLoginUser(@RequestParam String request) {
         return userService.GobalGetLoginUser(request);
     }
 
 
+
+    @PostMapping("/add")
+    @PermissionMethod(permission = "user_add")
     /**
-     * 创建用户
-     * 前端未实现
+     * @Author kimo
+     * @Description  创建用户只允许管理员
+     * @Date
+     * @Param
      * @param userAddRequest
      * @param request
      * @return
-     */
-    @PostMapping("/add")
-    @PermissionMethod(permission = "user_add")
+     * @return com.kimo.common.BaseResponse<java.lang.Long>
+     **/
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest, HttpServletRequest request) {
         if (userAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User user = new User();
         BeanUtils.copyProperties(userAddRequest, user);
-        // 默认密码 12345678
-//        String defaultPassword = "12345678";
-//        String encryptPassword = DigestUtils.md5DigestAsHex((UserServiceImpl.SALT + defaultPassword).getBytes());
         String encode = passwordEncoder.encode(userAddRequest.getPassword());
         user.setUserPassword(encode);
         boolean result = userService.save(user);
@@ -250,15 +228,20 @@ public class UserController {
         return ResultUtils.success(user.getId());
     }
 
+
+
+    @PostMapping("/delete")
+    @PermissionMethod(permission = "user_delete")
     /**
-     * 删除用户
-     * 前端未实现
+     * @Author kimo
+     * @Description  删除用户只允许管理员
+     * @Date
+     * @Param
      * @param deleteRequest
      * @param request
      * @return
-     */
-    @PostMapping("/delete")
-    @PermissionMethod(permission = "user_delete")
+     * @return com.kimo.common.BaseResponse<java.lang.Boolean>
+     **/
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -267,15 +250,19 @@ public class UserController {
         return ResultUtils.success(b);
     }
 
+
+    @PostMapping("/update")
+    @PermissionMethod(permission = "user_update")
     /**
-     * 更新用户
-     * 前端未实现
+     * @Author kimo
+     * @Description  修改用户只允许管理员
+     * @Date
+     * @Param
      * @param userUpdateRequest
      * @param request
      * @return
-     */
-    @PostMapping("/update")
-    @PermissionMethod(permission = "user_update")
+     * @return com.kimo.common.BaseResponse<java.lang.Boolean>
+     **/
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
                                             HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
@@ -289,15 +276,19 @@ public class UserController {
         return ResultUtils.success(true);
     }
 
+
+    @GetMapping("/get")
+    @PermissionMethod(permission = "user_read")
     /**
-     * 根据 id 获取用户（仅管理员）
-     * 前端未实现
+     * @Author kimo
+     * @Description  管理员、获取用户
+     * @Date
+     * @Param
      * @param id
      * @param request
      * @return
-     */
-    @GetMapping("/get")
-    @PermissionMethod(permission = "user_read")
+     * @return com.kimo.common.BaseResponse<com.kimo.ucenter.model.po.User>
+     **/
     public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -307,15 +298,19 @@ public class UserController {
         return ResultUtils.success(user);
     }
 
+
+    @PostMapping("/list/page")
+    @PermissionMethod(permission = "user_read")
     /**
-     * 分页获取用户列表（仅管理员）
-     * 前端未实现
+     * @Author kimo
+     * @Description  分页获取用户只允许管理员
+     * @Date
+     * @Param
      * @param userQueryRequest
      * @param request
      * @return
-     */
-    @PostMapping("/list/page")
-    @PermissionMethod(permission = "user_read")
+     * @return com.kimo.common.BaseResponse<com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.kimo.ucenter.model.po.User>>
+     **/
     public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
                                                    HttpServletRequest request) {
         long current = userQueryRequest.getCurrent();
@@ -328,10 +323,17 @@ public class UserController {
 
 
 
-    /**
-     * 是否为管理员
-     */
+
     @PostMapping("/isAdmin")
+    /**
+     * @Author kimo
+     * @Description  判断是否管理员
+     * @Date
+     * @Param
+     * @param request
+     * @return
+     * @return java.lang.Boolean
+     **/
     public Boolean isAdmin(HttpServletRequest request){
         return userService.isAdmin(request);
     }
@@ -341,11 +343,32 @@ public class UserController {
      * 操作积分数
      */
     @PostMapping("/update/point")
+    /**
+     * @Author kimo
+     * @Description  更新积分数值
+     * @Date
+     * @Param
+     * @param userId
+     * @param point
+     * @return
+     * @return java.lang.Boolean
+     **/
     public Boolean updatePoint(@RequestParam Long userId,@RequestParam Long point){
         return pointService.updatePoint(userId,point);
     }
 
+
+
     @PostMapping("/add/point")
+    /**
+     * @Author kimo
+     * @Description  创建积分
+     * @Date
+     * @Param
+     * @param userId
+     * @return
+     * @return java.lang.Boolean
+     **/
     public Boolean addPoint(@RequestParam  Long userId){
         return pointService.addPoint(userId);
     }
