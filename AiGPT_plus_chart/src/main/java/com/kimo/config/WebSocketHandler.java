@@ -44,7 +44,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketF
         ctx.channel().attr(key).setIfAbsent(uid);
 
         // 回复消息
-        ctx.channel().writeAndFlush(new TextWebSocketFrame("服务器收到消息啦"));
+//        ctx.channel().writeAndFlush(new TextWebSocketFrame("你好，我是友伴AI，有什么问题要帮助的吗？"));
     }
 
     @Override

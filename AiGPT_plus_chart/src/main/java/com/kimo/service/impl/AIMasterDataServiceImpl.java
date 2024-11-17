@@ -13,14 +13,17 @@ import com.kimo.constant.SqlConstants;
 import com.kimo.domain.CouZiCompletionEventResponse;
 import com.kimo.domain.CouZiCompletionRequest;
 import com.kimo.domain.GouZiAdditionalMessages;
+import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
 import com.kimo.mapper.AIMasterdataMapper;
+import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.mapper.PointMapper;
 
 import com.kimo.model.dto.chart.AIMasterDataQueryRequest;
 import com.kimo.model.dto.chart.UserDto;
 import com.kimo.model.dto.po.AIMasterData;
+import com.kimo.model.dto.po.AIMessageSession;
 import com.kimo.model.dto.po.Point;
 import com.kimo.service.AIMasterDataService;
 import com.kimo.service.AIMessageSessionService;
@@ -39,9 +42,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.sql.rowset.serial.SerialBlob;
+import java.sql.Blob;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import static com.kimo.constant.Constants.PointNumber;
@@ -76,45 +85,25 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
     private AIMessageSessionService aiMessageSessionService;
 
     @Autowired
+    private AIMessageSessionMapper  aiMessageSessionMapper;
+
+    @Autowired
     private WebSocketHandler webSocketHandler;
 
-//    @Override
-//    @Transactional
-//    public boolean validAiMasterData(AIMasterData aiMasterData, HttpServletRequest request) throws Exception {
-//        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-//        UserDto userDto = userClient.GobalGetLoginUser(username);
-//        ThrowUtils.throwIf(userDto == null, ErrorCode.SYSTEM_ERROR);
-//        aiMasterData.setUserId(userDto.getId());
-////        this.increase(userDto);
-//        CompletionRequest aiMasterDataRequest = CompletionRequest.builder()
-//                .stream(true)
-//                .messages(Collections.singletonList(Text.builder().role(CompletionRequest.Role.USER.getCode()).content(aiMasterData.getUserTitle()).build()))
-//                .model(CompletionRequest.Model.XUNFEI.getCode())
-//                .build();
-//        CountDownLatch countDownLatch = new CountDownLatch(1);
-//
-//        XunFeiEventSourceListener xunFeiEventSourceListener = new XunFeiEventSourceListener(countDownLatch);
-//
-//        EventSource eventSource = executor.completions(aiMasterDataRequest,null, xunFeiEventSourceListener);
-//        xunFeiEventSourceListener.getCountDownLatch().await();
-//        log.info(eventSource.toString());
-//        aiMasterData.setAiBody(xunFeiEventSourceListener.getAnswer());
-//        return true;
-//
-//    }
+    @Autowired
+    private AIMasterdataMapper masterdataMapper;
+
 
 
     @Override
-    public String getChartDataForCouZiChart(AIMasterData chartData, HttpServletRequest request, String botId, String user, String token) throws Exception {
-
+    public Map<String,String> getChartDataForCouZiChart(AIMasterData chartData, HttpServletRequest request, String botId, String user, String token) throws Exception {
+        HashMap<String, String> objectObjectHashMap = new HashMap<>();
         UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
         chartData.setUserId(userId);
-
+        objectObjectHashMap.put("userId", String.valueOf(userId));
         aiMessageSessionService.fetchUpdatePoint(PointNumber,userId);
-
-
         List<String> answerContents = new ArrayList<>();
         String lastAnswerContent = null;
         // 1. 创建参数
@@ -153,9 +142,12 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
                     CouZiCompletionEventResponse response = JSONUtil.toBean(data, CouZiCompletionEventResponse.class);
 
 //                    couZiCompletionEventResponses.add(response.getContent());
-                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
+                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType()) && response.getCreatedAt() == null) {
                         // 存储 content
                         webSocketHandler.sendMessageToUser(userId.toString(), response.getContent());
+                    }
+                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
+                        // 存储 content
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {
@@ -179,8 +171,67 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
         if (!answerContents.isEmpty()) {
             lastAnswerContent = answerContents.get(answerContents.size() - 1);
         }
-        return lastAnswerContent;
+        objectObjectHashMap.put("aiData", lastAnswerContent);
+        return objectObjectHashMap;
     }
+
+    @Override
+    public void IsAiMessagesessionForCourse(Map<String,String> map,String data) {
+        Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
+        ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
+        createAiMasterData(map, data,null);
+    }
+
+    private AIMasterData createAiMasterData(Map<String,String> map, String data, MultipartFile file){
+        long userId = Long.parseLong(map.get("userId"));
+        QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id",userId);
+        AIMessageSession aiMessageSessionId = aiMessageSessionService.getOne(queryWrapper);
+        AIMasterData aiMasterData = new AIMasterData();
+        aiMasterData.setUserId(userId);
+        aiMasterData.setCreateTime(LocalDateTime.now());
+        aiMasterData.setUpdateTime(LocalDateTime.now());
+        aiMasterData.setAiBody(map.get("aiData"));
+        aiMasterData.setUserBody(data);
+        aiMasterData.setAiMessageSessionId(aiMessageSessionId.getId());
+        if(file != null){
+            Blob avatarPhoyo = null;
+            byte[] avatarBytes = null;
+            try {
+                if(file != null && !file.isEmpty()){
+                    byte[] bytes = file.getBytes();
+                    avatarPhoyo = new SerialBlob(bytes);
+                }
+                if (avatarPhoyo != null) {
+                    avatarBytes = avatarPhoyo.getBytes(1, (int) avatarPhoyo.length()); // Get the entire blob as a byte array
+                }
+                aiMasterData.setPic(avatarBytes);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型错误");
+            }
+
+        }
+        int insert = masterdataMapper.insert(aiMasterData);
+        return aiMasterData;
+    }
+
+    private Boolean IsBooleanAiMessageSession(Map<String,String> map,String title){
+        long userId = Long.parseLong(map.get("userId"));
+        QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id",userId);
+        AIMessageSession aiMessageSessionId = aiMessageSessionMapper.selectOne(queryWrapper);
+        if(aiMessageSessionId == null){
+            AIMessageSession aiMessageSession1 = new AIMessageSession();
+            aiMessageSession1.setUserId(userId);
+            aiMessageSession1.setTitle(title);
+            aiMessageSession1.setCreateTime(LocalDateTime.now());
+            aiMessageSession1.setUpdateTime(LocalDateTime.now());
+            boolean save = aiMessageSessionService.save(aiMessageSession1);
+            ThrowUtils.throwIf(!save,ErrorCode.ADD_DATABASE_ERROR);
+        }
+        return true;
+    }
+
 
 
     @Override

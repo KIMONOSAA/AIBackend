@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 
 /**
  *
@@ -63,27 +65,17 @@ public class AIMasterDataController {
      */
     @PostMapping("/add/ai/master/data")
     public BaseResponse<AIMasterData> addAiMasterData(@RequestBody AIMasterDataAddRequest aiMasterDataAddRequest, HttpServletRequest request) throws Exception {
-        Long aiId = aiMasterDataAddRequest.getAiMessageSessionId();
-        QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(SqlConstants.CHART_ID,aiId);
-        //会话id是否存在
-        AIMessageSession aiMessageSession = aiMessageSessionService.getOne(queryWrapper);
-        ThrowUtils.throwIf(aiMessageSession == null,ErrorCode.NOT_FOUND_ERROR);
         AIMasterData aiMasterData = new AIMasterData();
         BeanUtils.copyProperties(aiMasterDataAddRequest, aiMasterData);
         String botId = "7433646386040160268";
         String user = "user";
         String token = "pat_bU9pga0uXTGH8nHAwZ8QkIISSNiIvTPS580NZW8DjEdndxNx8BouusYhjpYMlJPN";
         // 校验
-
-        String AIResult =  aiMasterDataService.getChartDataForCouZiChart(aiMasterData, request,botId,user,token);
-        if(StringUtils.isNotBlank(AIResult)){
-            aiMasterData.setAiResult(AIResult);
-            aiMasterdataMapper.insert(aiMasterData);
-        }
+        Map<String,String> AIResult =  aiMasterDataService.getChartDataForCouZiChart(aiMasterData, request,botId,user,token);
         if(StringUtils.isBlank(aiMasterData.getUserTitle())){
             return ResultUtils.error(ErrorCode.NOT_FOUND_ERROR);
         }
+        aiMasterDataService.IsAiMessagesessionForCourse(AIResult,aiMasterDataAddRequest.getUserTitle());
         return ResultUtils.success(aiMasterData);
     }
 

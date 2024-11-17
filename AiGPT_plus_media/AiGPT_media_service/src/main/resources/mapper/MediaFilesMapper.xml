@@ -17,6 +17,8 @@
             <result property="filePath" column="file_path" jdbcType="VARCHAR"/>
             <result property="fileId" column="file_id" jdbcType="VARCHAR"/>
             <result property="url" column="url" jdbcType="VARCHAR"/>
+        <result property="medium" column="medium" jdbcType="VARCHAR"/>
+        <result property="high" column="high" jdbcType="VARCHAR"/>
             <result property="username" column="username" jdbcType="VARCHAR"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
@@ -28,7 +30,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,manager_id,manager_name,
+        id,manager_id,manager_name,medium,high,
         company_id,company_name,filename,
         file_type,tags,bucket,
         file_path,file_id,url,

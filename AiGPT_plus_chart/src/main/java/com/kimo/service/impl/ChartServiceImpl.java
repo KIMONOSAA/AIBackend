@@ -20,6 +20,7 @@ import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
 import com.kimo.manager.RedisLimiterManager;
 import com.kimo.mapper.AIMasterdataMapper;
+import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.mapper.ChartMapper;
 
 import com.kimo.model.dto.chart.*;
@@ -57,6 +58,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+import static com.kimo.constant.Constants.PointNumber;
 import static com.kimo.constants.CouZiConstant.BEARER;
 import static com.kimo.utils.ExcelUtils.excelToCsv;
 
@@ -77,6 +79,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
     @Resource
     private ChartProducer chartProducer;
+
+    @Autowired
+    private AIMessageSessionMapper aiMessageSessionMapper;
 
     @Autowired
     private AIMasterdataMapper masterdataMapper;
@@ -123,25 +128,6 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         return objectObjectHashMap;
     }
 
-//    @Override
-//    public String getChartData(ChartDataRequest chartData) throws Exception {
-//        CompletionRequest aiMasterDataRequest = CompletionRequest.builder()
-//                .stream(true)
-//                .messages(Collections.singletonList(Text.builder().role(CompletionRequest.Role.USER.getCode()).content(chartData.getChartData()).build()))
-//                .model(CompletionRequest.Model.XUNFEI.getCode())
-//                .build();
-//
-//        CountDownLatch countDownLatch = new CountDownLatch(1);
-//
-//        XunFeiEventSourceListener xunFeiEventSourceListener = new XunFeiEventSourceListener(countDownLatch);
-//
-//        EventSource eventSource = executor.completions(aiMasterDataRequest,null, xunFeiEventSourceListener);
-//
-//        countDownLatch.await();
-//        log.info(eventSource.toString());
-//
-//        return xunFeiEventSourceListener.getAnswer();
-//    }
     @Override
     public String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception{
             if (chartData != null){
@@ -161,6 +147,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
         goZeAdditionalMessages1.add(chartData);
         // 1. 创建参数
+        //todo 有冗余要封装方法
         chatCompletion = CouZiCompletionRequest
                 .builder()
                 .stream(true)
@@ -171,12 +158,12 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
                 .build();
         // 2. 发起请求
         // 2. 发起请求
-        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
-        yuanQiConfiguration.setApiHost("https://api.coze.cn/");
-        yuanQiConfiguration.setApiKey(BEARER + token);
-        yuanQiConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+        CoZeConfiguration youbangConfiguration = new CoZeConfiguration();
+        youbangConfiguration.setApiHost("https://api.coze.cn/");
+        youbangConfiguration.setApiKey(BEARER + token);
+        youbangConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
         // 2. 会话工厂
-        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
+        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(youbangConfiguration);
         // 3. 开启会话
         this.coZeSession = factory.openSession();
         // 2. 请求等待
@@ -194,6 +181,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
                         // 存储 content
                         // 假设从 AI 获取的响应内容是 aiResponseContent，用户 ID 是 clientId
                         webSocketHandler.sendMessageToUser(userId, response.getContent());
+                    }
+                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
+                        // 存储 content
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {
@@ -266,6 +256,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
                     if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
                         // 存储 content
                         webSocketHandler.sendMessageToUser(userId, response.getContent());
+                    }
+                    if (StringUtils.isNotBlank(response.getContent()) && "answer".equals(response.getType())) {
+                        // 存储 content
                         answerContents.add(response.getContent());
                     }
                 } catch (Exception e) {
@@ -413,7 +406,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         HashMap<String, String> objectObjectHashMap = new HashMap<>();
         Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
         objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
-
+        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
         String chartDataForCouZiChart = null;
         try {
             chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(chartData,null, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
@@ -429,7 +422,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         HashMap<String, String> objectObjectHashMap = new HashMap<>();
         Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
         objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
-
+        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
 
         String botId = "7436728231417544739";
 //        String user = "user";
@@ -450,6 +443,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         HashMap<String, String> objectObjectHashMap = new HashMap<>();
         Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
         objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
+        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
         String botId = "7436728231417544739";
 //        String user = "user";
         String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
@@ -478,6 +472,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         HashMap<String, String> objectObjectHashMap = new HashMap<>();
         Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
         objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
+        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
         String botId = "7436592804966989851";
 //        String user = "user";
         String token = "pat_9d7iBX080ReNOFLog3fb8y1k9iLAOMFh0hkGxwcmNhQI33EjCB5vK11oufhDnZbV";
@@ -495,7 +490,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         long userId = Long.parseLong(map.get("userId"));
         QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id",userId);
-        AIMessageSession aiMessageSessionId = aiMessageSessionService.getOne(queryWrapper);
+        AIMessageSession aiMessageSessionId = aiMessageSessionMapper.selectOne(queryWrapper);
         if(aiMessageSessionId == null){
             AIMessageSession aiMessageSession1 = new AIMessageSession();
             aiMessageSession1.setUserId(userId);

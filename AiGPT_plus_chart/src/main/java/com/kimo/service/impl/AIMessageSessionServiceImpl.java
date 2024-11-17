@@ -199,7 +199,13 @@ public class AIMessageSessionServiceImpl extends ServiceImpl<AIMessageSessionMap
 
     @Override
     public synchronized void fetchUpdatePoint(Long pointNumber, Long userId) {
-        Boolean b = userClient.updatePoint(userId, pointNumber);
+        Boolean b = null;
+        try {
+            b = userClient.updatePoint(userId, pointNumber);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.POINT_NOT_FOUNT);
+        }
+
         ThrowUtils.throwIf(!b,ErrorCode.NOT_FOUND_ERROR);
 
     }

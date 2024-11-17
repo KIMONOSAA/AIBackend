@@ -73,9 +73,21 @@ public class MediaFiles implements Serializable {
     private String fileId;
 
     /**
-     * 媒资文件访问地址
+     * 媒资文件访问地址 - 原画
      */
     private String url;
+
+    /**
+     * 媒资文件访问地址 - 720
+     */
+    private String medium;
+
+
+    /**
+     * 媒资文件访问地址 - 1080
+     */
+    private String high;
+
 
     /**
      * 上传人
