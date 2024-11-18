@@ -70,11 +70,17 @@
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis-spring</artifactId>
         </dependency>
+
         <dependency>
             <groupId>com.kimo</groupId>
-            <artifactId>AiGPT_plus_model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>AiGPT_jwt</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.kimo</groupId>
+            <artifactId>AiGPT_plus_base</artifactId>
+            <version>0.0.1</version>
         </dependency>
     </dependencies>
 

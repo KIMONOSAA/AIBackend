@@ -8,29 +8,29 @@ public interface MinioConstant {
     /**
      * minio文件系统名字
      */
-    String MINIO_NAME = "minio";
+    public static final String MINIO_NAME = "minio";
 
     /**
      * 格式类型
      */
-    String MERGE_TYPE = ".merge";
-    String VIDEO_TYPE = "video";
+    public static final String MERGE_TYPE = ".merge";
+    public static final String VIDEO_TYPE = "video";
 
     /**
      * chunk
      */
-    String CHUNK = "chunk";
+    public static final String CHUNK = "chunk";
 
     /**
      * 特殊符号/
      */
-    String SPECIAL_SYMBOLS_ONE = "/";
-    String SPECIAL_SYMBOLS_TWO = "-";
+    public static final String SPECIAL_SYMBOLS_ONE = "/";
+    public static final String SPECIAL_SYMBOLS_TWO = "-";
 
     /**
      * 临时
      */
-    String TEMP_NAME = "temp";
+    public static final String TEMP_NAME = "temp";
 
 
 }

@@ -7,13 +7,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kimo.ICoZeApi;
 import com.kimo.common.Constants;
+
 import com.kimo.common.ErrorCode;
 import com.kimo.config.OkHttpClientProvider;
 import com.kimo.domain.CouZiCompletionFileRequest;
 import com.kimo.domain.CouZiCompletionFileResponse;
 import com.kimo.domain.CouZiCompletionRequest;
 
-import com.kimo.domain.CouZiCompletionResponse;
+
 import com.kimo.exception.BusinessException;
 import com.kimo.session.CoZeConfiguration;
 import com.kimo.session.CoZeSession;

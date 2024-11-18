@@ -10,6 +10,13 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableFeignClients(basePackages = "com.kimo.feignclient")
 @EnableDiscoveryClient
+/**
+ * @Author: Mr.kimo
+ * @Date: 18:27
+ * @return:
+ * @Param:
+ * @Description: 当前模块大部分已弃用
+ */
 public class ContentApplication {
     public static void main(String[] args) {
         SpringApplication.run(ContentApplication.class, args);

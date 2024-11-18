@@ -1,4 +1,4 @@
-package com.kimo.interceptor;
+package com.kimo.config;
 
 import com.kimo.config.CloudSecurityProperties;
 import com.kimo.constant.CloudConstant;
@@ -11,23 +11,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Component
 public class ServerProtectInterceptor implements HandlerInterceptor {
 
     private CloudSecurityProperties properties;
 
-
     @Autowired
-    private RedisTemplate<String,String> redisTemplate;
+    @Qualifier("redisTemplateOrGateway")
+    private RedisTemplate<String, String> redisTemplateOrGateway;
+
 
 
 
@@ -54,7 +53,7 @@ public class ServerProtectInterceptor implements HandlerInterceptor {
             return true; 
         }
         String key = RedisDataConstant.GATEWAY + header;
-        String cachedToken = redisTemplate.opsForValue().get(key);
+        String cachedToken = redisTemplateOrGateway.opsForValue().get(key);
         if (StringUtils.isEmpty(cachedToken)){
             WebUtils.writeJson(response,resultData);
             return false;
@@ -66,5 +65,7 @@ public class ServerProtectInterceptor implements HandlerInterceptor {
  
     public void setProperties(CloudSecurityProperties properties) { 
         this.properties = properties; 
-    } 
+    }
+
+
 } 

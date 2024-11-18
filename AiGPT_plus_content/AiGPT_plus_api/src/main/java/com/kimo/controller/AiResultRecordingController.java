@@ -20,14 +20,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 
-/**
- * AI设定角色消息(不测试前端还未实现)
- *前端没实现
- * @author  kimo
- */
+
 @RestController
 @RequestMapping("/content")
 @Slf4j
+/**
+ * @Author: Mr.kimo
+ * @Date: 18:25
+ * @return:
+ * @Param:
+ * @Description: 已更新版本，当前模块用到的模块已经移到到chart这个服务中
+ */
 public class AiResultRecordingController {
 
     @Autowired

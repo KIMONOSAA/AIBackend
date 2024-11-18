@@ -48,6 +48,11 @@
             <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
             <version>4.4.0</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.kimo</groupId>-->
+<!--            <artifactId>gateway_Interceptor_sdk</artifactId>-->
+<!--            <version>0.0.4</version>-->
+<!--        </dependency>-->
 
         <!--        <dependency>-->
 <!--            <groupId>com.github.xiaoymin</groupId>-->
@@ -130,16 +135,17 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.kimo</groupId>
-            <artifactId>AiGPT_plus_base</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
+
         <dependency>
             <groupId>com.kimo</groupId>
             <artifactId>AiGPT_jwt</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.kimo</groupId>
+            <artifactId>AiGPT_plus_base</artifactId>
+            <version>0.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>

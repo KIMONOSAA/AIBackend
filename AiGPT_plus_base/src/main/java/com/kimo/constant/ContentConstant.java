@@ -8,41 +8,41 @@ public interface ContentConstant {
     /**
      * 停止
      */
-    String STOP_NAME = "stop";
+    public static final String STOP_NAME = "stop";
 
     /**
      * 版本号
      */
-    String GENERAL = "generalv3.5";
+    public static final String GENERAL = "generalv3.5";
 
     /**
      * 常规
      */
-    String GENERAL_NAME = "general";
+    public static final String GENERAL_NAME = "general";
 
     /**
      * 违约
      */
-    String DEFAULT_NAME = "default";
+    public static final String DEFAULT_NAME = "default";
 
     /**
      * AIRole
      */
-    String AIROLE_NAME = "AIRole";
+    public static final String AIROLE_NAME = "AIRole";
 
     /**
      * AIDescription
      */
-    String AIDESCRIPTION_NAME = "AIDescription";
+    public static final String AIDESCRIPTION_NAME = "AIDescription";
 
     /**
      * 换位符
      */
-    String LINE_FEED = "\n";
+    public static final String LINE_FEED = "\n";
 
     /**
      * 反馈信息
      */
-    String TURE_FEEDBACK = "题目的正确答案：";
-    String FALSE_FEEDBACK = "学生的错误答案：";
+    public static final String TURE_FEEDBACK = "题目的正确答案：";
+    public static final String FALSE_FEEDBACK = "学生的错误答案：";
 }

@@ -2,6 +2,7 @@ package com.kimo.amqp;
 
 
 import com.alibaba.fastjson2.JSON;
+
 import com.kimo.config.ApplicationContextFactory;
 import com.kimo.constant.RabbitMQConstant;
 import com.kimo.messagesdk.model.po.MqMessage;

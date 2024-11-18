@@ -29,4 +29,8 @@ public interface CouZiConstant {
     public static final String AI_PIC_BOT_ID = "7436728231417544739";
 
     public static final String AI_PIC_BOT_TOKEN = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
+
+    public static final String LEARN_TEACH_PLAN_BOT_ID = "7436592804966989851";
+
+    public static final String LEARN_TEACH_PLAN_TOKEN = "pat_9d7iBX080ReNOFLog3fb8y1k9iLAOMFh0hkGxwcmNhQI33EjCB5vK11oufhDnZbV";
 }

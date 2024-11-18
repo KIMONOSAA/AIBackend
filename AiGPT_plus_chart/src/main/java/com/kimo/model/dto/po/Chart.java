@@ -1,6 +1,7 @@
 package com.kimo.model.dto.po;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -10,6 +11,7 @@ import java.util.Date;
  * 图表信息表
  * @TableName chart
  */
+
 @TableName(value ="chart")
 @Data
 public class Chart implements Serializable {

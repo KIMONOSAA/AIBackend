@@ -17,7 +17,6 @@ import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.feignclient.UserClient;
 import com.kimo.listener.CouZiEventSourceListener;
-import com.kimo.manager.RedisLimiterManager;
 import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.mapper.ChartMapper;
@@ -45,14 +44,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.sql.rowset.serial.SerialBlob;
+import java.io.IOException;
 import java.sql.Blob;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+import static com.kimo.constans.CouZiConstant.*;
 import static com.kimo.constant.Constants.PointNumber;
 import static com.kimo.constants.CouZiConstant.BEARER;
 import static com.kimo.utils.ExcelUtils.excelToCsv;
@@ -88,8 +90,6 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     @Autowired
     private CoZeSession coZeSession;
 
-    @Resource
-    private RedisLimiterManager redisLimiterManager;
 
     @Autowired
     private ServletUtils  servletUtils;
@@ -125,79 +125,84 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     }
 
     @Override
-    public String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData,CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception{
-            if (chartData != null){
-                return this.getChartDataForCouZiChart(chartData, botId, user,userId, token);
-            }else {
-                return this.getChartDataForCouZiChartForFileData(fileData,botId,user,userId,token);
+    public String getChartDataForCouZiChartAndFileData(GouZiAdditionalMessages chartData, CouZiAdditionalFileMessage fileData, String botId, String user, String userId, String token) throws Exception {
+        try {
+            if (chartData != null) {
+                return executeChatCompletion(chartData, null, botId, user, userId, token);
+            } else {
+                return executeChatCompletion(null, fileData, botId, user, userId, token);
             }
-    }
-
-
-    private String getChartDataForCouZiChart(GouZiAdditionalMessages chartData,String botId,String user,String userId,String token) throws Exception {
-        ArrayList<CouZiCompletionEventResponse> couZiCompletionEventResponses = new ArrayList<>();
-        List<String> answerContents = new ArrayList<>();
-        String lastAnswerContent = null;
-        //减去积分
-        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
-        // 1. 创建参数
-        ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
-        goZeAdditionalMessages1.add(chartData);
-        // 1. 创建参数
-        CouZiCompletionRequest couZiCompletionRequest = CreateCouZiCompletionRequest(true, user, true, botId, goZeAdditionalMessages1);
-        // 2. 发起请求
-        CoZeConfiguration youbangConfiguration = new CoZeConfiguration();
-        configExtracted(token, youbangConfiguration);
-        // 2. 会话工厂
-        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(youbangConfiguration);
-        // 3. 开启会话
-        this.coZeSession = factory.openSession();
-        // 2. 请求等待
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        CouZiEventSourceListener couZiEventSourceListener = new CouZiEventSourceListener(Long.parseLong(userId), webSocketHandler, answerContents, countDownLatch);
-        EventSource eventSource = coZeSession.chatCompletions(null,null,couZiCompletionRequest,couZiEventSourceListener);
-        couZiEventSourceListener.getCountDownLatch().await();
-        // 获取最终的回答内容
-        if (!couZiEventSourceListener.getAnswerContents().isEmpty()) {
-            lastAnswerContent = couZiEventSourceListener.getAnswerContents().get(couZiEventSourceListener.getAnswerContents().size() - 1);
+        } catch (Exception e) {
+            // 统一异常处理，记录日志或其他操作
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"处理数据时出错");
         }
-        return lastAnswerContent;
     }
 
-
-
-    public String getChartDataForCouZiChartForFileData(CouZiAdditionalFileMessage fileData,String botId,String user,String userId,String token) throws Exception {
+    private String executeChatCompletion(GouZiAdditionalMessages chartData, CouZiAdditionalFileMessage fileData, String botId, String user, String userId, String token) throws Exception {
         List<String> answerContents = new ArrayList<>();
-        String lastAnswerContent = null;
-        //减去积分
-        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
-        // 1. 创建参数
-        ArrayList<CouZiAdditionalFileMessage> goZiAdditionalFileMessage = new ArrayList<>();
-        goZiAdditionalFileMessage.add(fileData);
-        CouZiCompletionFileRequest chatCompletionFile = CreateCouZiCompletionFileRequest(true, user, true, botId, goZiAdditionalFileMessage);
 
-        // 2. 发起请求
-        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
-        configExtracted(token, yuanQiConfiguration);
-        // 2. 会话工厂
-        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
-        // 3. 开启会话
+        // 减去积分
+        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
+
+        // 创建请求对象
+        Object requestObject = createCompletionRequest(chartData, fileData, user, botId);
+
+        // 初始化会话和监听器
+        CoZeConfiguration configuration = new CoZeConfiguration();
+        configExtracted(token, configuration);
+        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(configuration);
         this.coZeSession = factory.openSession();
-        // 2. 请求等待
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        CouZiEventSourceListener couZiEventSourceListener = new CouZiEventSourceListener(Long.parseLong(userId), webSocketHandler, answerContents, countDownLatch);
-        EventSource eventSource = coZeSession.chatCompletions(token,null,chatCompletionFile,couZiEventSourceListener);
-        countDownLatch.await();
-        couZiEventSourceListener.getCountDownLatch().await();
-        // 获取最终的回答内容
-        if (!couZiEventSourceListener.getAnswerContents().isEmpty()) {
-            lastAnswerContent = couZiEventSourceListener.getAnswerContents().get(couZiEventSourceListener.getAnswerContents().size() - 1);
+        CouZiEventSourceListener listener = initializeListener(Long.parseLong(userId), answerContents);
+
+        // 执行请求
+        if (requestObject instanceof CouZiCompletionRequest) {
+            coZeSession.chatCompletions(null, null, (CouZiCompletionRequest) requestObject, listener);
+        } else if (requestObject instanceof CouZiCompletionFileRequest) {
+            coZeSession.chatCompletions(null, null, (CouZiCompletionFileRequest) requestObject, listener);
+        } else {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"请求对象类型无效");
         }
-        return lastAnswerContent;
+
+        // 等待结果
+        listener.getCountDownLatch().await();
+        return getLastAnswerContent(listener);
     }
+
+    private CouZiEventSourceListener initializeListener(Long userId, List<String> answerContents) {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        return new CouZiEventSourceListener(userId, webSocketHandler, answerContents, countDownLatch);
+    }
+
+    private String getLastAnswerContent(CouZiEventSourceListener listener) {
+        if (!listener.getAnswerContents().isEmpty()) {
+            return listener.getAnswerContents().get(listener.getAnswerContents().size() - 1);
+        }
+        return null;
+    }
+    // 创建请求对象的通用方法
+    private Object createCompletionRequest(GouZiAdditionalMessages chartData, CouZiAdditionalFileMessage fileData, String user, String botId) {
+        if (chartData != null) {
+            ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages = new ArrayList<>();
+            goZeAdditionalMessages.add(chartData);
+            return CreateCouZiCompletionRequest(true, user, true, botId, goZeAdditionalMessages);
+        } else if (fileData != null) {
+            ArrayList<CouZiAdditionalFileMessage> goZiAdditionalFileMessage = new ArrayList<>();
+            goZiAdditionalFileMessage.add(fileData);
+            return CreateCouZiCompletionFileRequest(true, user, true, botId, goZiAdditionalFileMessage);
+        }
+        throw new BusinessException(ErrorCode.SYSTEM_ERROR,"必须提供 chartData 或 fileData");
+    }
+
 
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 17:46
+     * @return: java.lang.Boolean
+     * @Param: [jakarta.servlet.http.HttpServletRequest]
+     * @Description: 删除图表，版本更新，已弃用
+     */
     public Boolean deletedChart(HttpServletRequest request) {
         Long loginUser = this.getLoginUser(request);
         // 判断是否存在
@@ -212,6 +217,13 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     }
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 17:46
+     * @return: com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.kimo.model.dto.po.Chart>
+     * @Param: [jakarta.servlet.http.HttpServletRequest, com.kimo.model.dto.chart.ChartQueryRequest]
+     * @Description: 版本更新，已弃用
+     */
     public Page<Chart> listMyChartByPage(HttpServletRequest request, ChartQueryRequest chartQueryRequest) {
         Long loginUser = this.getLoginUser(request);
         chartQueryRequest.setUserId(loginUser);
@@ -224,6 +236,13 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     }
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 17:47
+     * @return: java.lang.Boolean
+     * @Param: [jakarta.servlet.http.HttpServletRequest, com.kimo.model.dto.chart.ChartEditRequest]
+     * @Description: 版本更新，已弃用
+     */
     public Boolean editChart(HttpServletRequest request, ChartEditRequest chartEditRequest) {
         Chart chart = new Chart();
         BeanUtils.copyProperties(chartEditRequest, chart);
@@ -242,6 +261,13 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     }
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 17:47
+     * @return: com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.kimo.model.dto.po.Chart>
+     * @Param: [long, long, com.kimo.model.dto.chart.ChartQueryRequest]
+     * @Description: 版本更新，已弃用
+     */
     public Page<Chart> listChartUserByPage(long current, long size, ChartQueryRequest chartQueryRequest) {
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
@@ -250,244 +276,330 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     }
 
     @Override
+    @Transactional
     public BiResponse genChartByAIRabbitMQ(MultipartFile multipartFile, GenChartyByAIRequest genChartByAI, HttpServletRequest request) {
-        String name = genChartByAI.getName();
-        String goal = genChartByAI.getGoal();
-        String chartType = genChartByAI.getChartType();
+        // 验证文件
+        validateFile(multipartFile);
 
-        //校验
-//        ThrowUtils.throwIf(StringUtils.isBlank(goal),ErrorCode.PARAMS_ERROR,"目标为空");
-//        ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100,ErrorCode.PARAMS_ERROR,"名称过长");
-        //校验文件
-        long size = multipartFile.getSize();
-        String originalFilename = multipartFile.getOriginalFilename();
-        final long ONE_MB = 1024L * 1024L;
-        ThrowUtils.throwIf(size > ONE_MB, ErrorCode.PARAMS_ERROR, "文件超过 1MB");
-        String suffix = FileUtil.getSuffix(originalFilename);
-        final List<String> validFileSuffix = Arrays.asList(ChartConstant.SPECIFICATION_XLSX, ChartConstant.SPECIFICATION_XLS);
-        ThrowUtils.throwIf(!validFileSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
-//        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-//        UserDto loginUser = userClient.GobalGetLoginUser(username);
-//        redisLimiterManager.doRateLimit(ChartConstant.GEN_CHAR_KEY + loginUser.getId());
+        // 构造用户输入
+        String userGoal = StringUtils.isNotBlank(genChartByAI.getChartType())
+                ? genChartByAI.getGoal() + ChartConstant.UTILIZATION + genChartByAI.getChartType()
+                : genChartByAI.getGoal();
 
-        StringBuilder userInput = new StringBuilder();
-        userInput.append(ChartConstant.ANALYZE_DEMAND).append("\n");
-        String userGoal = goal;
-        if(StringUtils.isNotBlank(chartType)){
-            userGoal += ChartConstant.UTILIZATION + chartType;
-        }
-        userInput.append(userGoal).append("\n");
-        userInput.append(ChartConstant.RAW_DATA).append("\n");
+        String userInput = String.join("\n",
+                ChartConstant.ANALYZE_DEMAND,
+                userGoal,
+                ChartConstant.RAW_DATA,
+                excelToCsv(multipartFile)
+        );
 
-        String resultData = excelToCsv(multipartFile);
-        userInput.append(resultData).append("\n");
-//        this.increase(loginUser);
-
-
-        Chart chart = new Chart();
-
-        chart.setName(name);
-        chart.setGoal(goal);
-        chart.setChartData(resultData);
-        chart.setChartType(chartType);
-        chart.setStatus(ChartConstant.IS_wait);
-
-//        chart.setUserId(loginUser.getId());
+        // 创建并插入 Chart 对象
+        Chart chart = createChart(genChartByAI.getName(), genChartByAI.getGoal(), genChartByAI.getChartType(), userInput);
         int insert = chartMapper.insert(chart);
-        ThrowUtils.throwIf(insert <= 0,ErrorCode.SYSTEM_ERROR,"图表保存失败");
+        ThrowUtils.throwIf(insert <= 0, ErrorCode.SYSTEM_ERROR, "图表保存失败");
+
+        // 发送消息到队列
         chartProducer.sendMessage(String.valueOf(chart.getId()));
 
+        // 构造响应
         BiResponse biResponse = new BiResponse();
         biResponse.setChartId(chart.getId());
         return biResponse;
     }
 
-    @Override
-    public Map<String, String> getCourseInfoDataForCouZi(GouZiAdditionalMessages chartData,String botId,String token, String courseId, HttpServletRequest request) {
-        HashMap<String, String> objectObjectHashMap = new HashMap<>();
-        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
-        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
-        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
-        String chartDataForCouZiChart = null;
-        try {
-            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(chartData,null, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
-        }
-        objectObjectHashMap.put("aiData", chartDataForCouZiChart);
-        return objectObjectHashMap;
+    private void validateFile(MultipartFile multipartFile) {
+        final long ONE_MB = 1024L * 1024L;
+        long size = multipartFile.getSize();
+        String originalFilename = multipartFile.getOriginalFilename();
+        String suffix = FileUtil.getSuffix(originalFilename);
+        final List<String> validFileSuffix = Arrays.asList(ChartConstant.SPECIFICATION_XLSX, ChartConstant.SPECIFICATION_XLS);
+
+        // 文件大小校验
+        ThrowUtils.throwIf(size > ONE_MB, ErrorCode.PARAMS_ERROR, "文件超过 1MB");
+        // 文件格式校验
+        ThrowUtils.throwIf(!validFileSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "文件类型错误");
     }
 
-    @Override
-    public Map<String, String> getCourseInfoDataForCouZi(CouZiAdditionalFileMessage chartData, String courseId, HttpServletRequest request) {
-        HashMap<String, String> objectObjectHashMap = new HashMap<>();
-        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
-        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
-        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
+    private Chart createChart(String name, String goal, String chartType, String resultData) {
+        Chart chart = new Chart();
+        chart.setName(name);
+        chart.setGoal(goal);
+        chart.setChartType(chartType);
 
-        String botId = "7436728231417544739";
-//        String user = "user";
-        String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
-        String chartDataForCouZiChart = null;
-        try {
-            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(null,chartData, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
-        }
-        objectObjectHashMap.put("aiData", chartDataForCouZiChart);
-        return objectObjectHashMap;
+        chart.setGenResult(resultData);
+        return chart;
+
     }
 
+
+
+    @Override
+    public Map<String, String> fetchCourseInfoForChart(GouZiAdditionalMessages additionalMessages, String botId, String token, String courseId, HttpServletRequest request) {
+        // 获取用户信息
+        Map<String, String> loginUserInfo = getUserInfoFromRequest(request);
+        String userId = loginUserInfo.get("userId");
+        String userName = loginUserInfo.get("userName");
+
+        // 更新用户积分
+        updateUserPoints(userId);
+
+        // 获取 CouZi 数据
+        String chartDataForCouZiChart;
+        try {
+            chartDataForCouZiChart = getChartDataForCouZiChartAndFileData(additionalMessages, null, botId, userName, userId, token);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR, "获取 CouZi 的数据时出错");
+        }
+
+        // 构建返回数据
+        Map<String, String> responseData = new HashMap<>();
+        responseData.put("userId", userId);
+        responseData.put("aiData", chartDataForCouZiChart);
+        return responseData;
+    }
+
+    private Map<String, String> getUserInfoFromRequest(HttpServletRequest request) {
+        return this.getLoginUserForUserName(request);
+    }
+
+    private void updateUserPoints(String userId) {
+        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
+    }
+
+
+    /**
+     * 获取 CouZi 课程信息数据
+     *
+     * 该方法用于处理上传的文件，提取用户信息并通过 CoZe API 发送请求获取处理结果。
+     *
+     * @param file    用户上传的文件 (图片、文档等)
+     * @param request HttpServletRequest 对象，用于获取当前请求的用户信息
+     * @return 包含用户信息和响应数据的 Map
+     * @throws BusinessException 如果调用 CoZe API 失败或处理异常
+     */
     @Override
     public Map<String, String> getCourseInfoDataForCouZi(MultipartFile file, HttpServletRequest request) {
 
-        HashMap<String, String> objectObjectHashMap = new HashMap<>();
-        Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
-        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
-        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
-        String botId = "7436728231417544739";
-//        String user = "user";
-        String token = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
-        String chartDataForCouZiChart = null;
-        // 2. 发起请求
-        CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
-        yuanQiConfiguration.setApiHost("https://api.coze.cn/");
-        yuanQiConfiguration.setApiKey(BEARER + token);
-        yuanQiConfiguration.setLevel(HttpLoggingInterceptor.Level.HEADERS);
-        // 2. 会话工厂
-        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
-        // 3. 开启会话
+        // 1. 从 HttpServletRequest 中获取当前用户的信息
+        // 使用辅助方法 getUserInfoFromRequest 提取用户信息，并存储在 loginUserInfo Map 中
+        Map<String, String> loginUserInfo = this.getUserInfoFromRequest(request);
+        String userId = loginUserInfo.get("userId");
+        String userName = loginUserInfo.get("userName");
+
+        // 2. 将用户 ID 添加回 loginUserInfo Map 中，确保其在后续处理中存在
+        loginUserInfo.put("userId", userId);
+
+        // 3. 更新用户的积分（调用积分更新服务）
+        // 这一步可能是根据上传文件的处理行为来奖励用户积分
+        this.updateUserPoints(userId);
+
+        // 4. 创建 CoZeConfiguration 配置对象
+        // CoZeConfiguration 是与 CoZe API 交互的配置类
+        // 使用 configExtracted 方法初始化配置，参数 AI_PIC_BOT_TOKEN 是 API 的授权令牌
+        CoZeConfiguration configuration = new CoZeConfiguration();
+        configExtracted(AI_PIC_BOT_TOKEN, configuration);
+
+        // 5. 使用配置对象创建会话工厂 (Session Factory)
+        // DefaultCoZeSessionFactory 负责基于配置初始化会话
+        DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(configuration);
+
+        // 6. 通过会话工厂开启一个新的会话
+        // 这一步会生成一个新的 coZeSession 对象，用于后续的 API 请求
         this.coZeSession = factory.openSession();
+
         try {
-            CouZiCompletionFileResponse couZiCompletionFileResponse = coZeSession.chatCompletions(null, null, file);
-            objectObjectHashMap.put("picId",couZiCompletionFileResponse.getData().getId());
+            // 7. 调用 CoZe API 发送上传的文件数据
+            // 使用 coZeSession.chatCompletions 方法与 AI 交互，获取 CouZiCompletionFileResponse 响应
+            CouZiCompletionFileResponse couZiCompletionFileResponse = coZeSession.chatCompletions(AI_PIC_BOT_TOKEN, null, file);
+
+            // 8. 从 API 响应中提取 picId，并将其存储在 loginUserInfo Map 中
+            // 该 ID 可能用于后续处理或标识此次上传文件的唯一标识
+            loginUserInfo.put("picId", couZiCompletionFileResponse.getData().getId());
         } catch (JsonProcessingException e) {
+            // 9. 如果在 API 调用或 JSON 解析时发生异常，抛出自定义 BusinessException
+            // 错误码为 FETCH_COUZI_ERROR，表示获取 CouZi 数据时出错
             throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
         }
 
-        return objectObjectHashMap;
+        // 10. 返回包含用户信息和 AI 响应数据的 Map
+        return loginUserInfo;
     }
 
+
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:06
+     * @return: java.util.Map<java.lang.String,java.lang.String>
+     * @Param: [com.kimo.domain.GouZiAdditionalMessages, java.lang.String, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 根据用户设置的时间已经当前课程描述和章节的描述调用Bot智能体生成学习计划
+     */
     public Map<String,String> getLearnTeachPlanForCouZi(GouZiAdditionalMessages chartData, String courseId, HttpServletRequest request) {
-        HashMap<String, String> objectObjectHashMap = new HashMap<>();
         Map<String, String> loginUserForUserName = this.getLoginUserForUserName(request);
-        objectObjectHashMap.put("userId", loginUserForUserName.get("userId"));
-        aiMessageSessionService.fetchUpdatePoint(PointNumber,Long.parseLong(loginUserForUserName.get("userId")));
-        String botId = "7436592804966989851";
-//        String user = "user";
-        String token = "pat_9d7iBX080ReNOFLog3fb8y1k9iLAOMFh0hkGxwcmNhQI33EjCB5vK11oufhDnZbV";
+        String userId = loginUserForUserName.get("userId");
+        String userName = loginUserForUserName.get("userName");
+        loginUserForUserName.put("userId", userId);
+        this.updateUserPoints(userId);
         String chartDataForCouZiChart = null;
         try {
-            chartDataForCouZiChart = this.getChartDataForCouZiChart(chartData, botId, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), token);
+            chartDataForCouZiChart = this.getChartDataForCouZiChartAndFileData(chartData,null, LEARN_TEACH_PLAN_BOT_ID, loginUserForUserName.get("userName"),loginUserForUserName.get("userId"), LEARN_TEACH_PLAN_TOKEN);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FETCH_COUZI_ERROR);
         }
-        objectObjectHashMap.put("aiData", chartDataForCouZiChart);
-        return objectObjectHashMap;
+        loginUserForUserName.put("aiData", chartDataForCouZiChart);
+        return loginUserForUserName;
     }
 
-    private Boolean IsBooleanAiMessageSession(Map<String,String> map,String title){
-        long userId = Long.parseLong(map.get("userId"));
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:08
+     * @return: true 如果会话创建成功，false 如果会话已存在
+     * @Param: userId 用户ID，title 会话标题
+     * @Description: 确保当前用户有 AI 消息会话，如果没有则创建
+     */
+    private Boolean ensureAiMessageSessionExists(Long userId, String title) {
+        // 使用 QueryWrapper 查询是否已经存在 AIMessageSession
         QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id",userId);
-        AIMessageSession aiMessageSessionId = aiMessageSessionMapper.selectOne(queryWrapper);
-        if(aiMessageSessionId == null){
-            AIMessageSession aiMessageSession1 = new AIMessageSession();
-            aiMessageSession1.setUserId(userId);
-            aiMessageSession1.setTitle(title);
-            aiMessageSession1.setCreateTime(LocalDateTime.now());
-            aiMessageSession1.setUpdateTime(LocalDateTime.now());
-            boolean save = aiMessageSessionService.save(aiMessageSession1);
-            ThrowUtils.throwIf(!save,ErrorCode.ADD_DATABASE_ERROR);
+        queryWrapper.eq("user_id", userId);
+        AIMessageSession aiMessageSession = aiMessageSessionMapper.selectOne(queryWrapper);
+
+        // 如果会话不存在，则创建新会话
+        if (aiMessageSession == null) {
+            AIMessageSession newSession = new AIMessageSession();
+            newSession.setUserId(userId);
+            newSession.setTitle(title);
+            newSession.setCreateTime(LocalDateTime.now());
+            newSession.setUpdateTime(LocalDateTime.now());
+
+            // 保存新会话并检查是否成功
+            boolean saveSuccess = aiMessageSessionService.save(newSession);
+            ThrowUtils.throwIf(!saveSuccess, ErrorCode.ADD_DATABASE_ERROR);
+
+            return true;  // 会话成功创建
         }
-        return true;
+
+        // 如果会话已存在，则返回 false
+        return false;
     }
 
 
+
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:10
+     * @return:
+     * @Param:
+     * @Description: 更新用户与Bot智能体对话数据
+     */
     private Boolean updatedAiMasterData(Map<String,String> map,String data,MultipartFile file){
+        //获取data所需要的数据
         long userId = Long.parseLong(map.get("userId"));
         long masterId = Long.parseLong(map.get("masterId"));
         long sessionId = Long.parseLong(map.get("sessionId"));
+        String aiData = map.get("aiData");
+
+        // 查询 AI Master 数据
         AIMasterData aiMasterData = aiMasterdataMapper.selectById(masterId);
-        ThrowUtils.throwIf(aiMasterData == null,ErrorCode.NOT_FOUND_ERROR);
-        ThrowUtils.throwIf(aiMasterData.getAiMessageSessionId() != sessionId,ErrorCode.NOT_FOUND_ERROR);
-        ThrowUtils.throwIf(aiMasterData.getUserId() != userId,ErrorCode.NOT_FOUND_ERROR);
-        aiMasterData.setAiBody(map.get("aiData"));
-        aiMasterData.setUpdateTime(LocalDateTime.now());
-        aiMasterdataMapper.updateById(aiMasterData);
-        return true;
+
+        // 如果找不到数据，则抛出异常
+        ThrowUtils.throwIf(aiMasterData == null, ErrorCode.NOT_FOUND_ERROR, "未找到 AI 主数据");
+
+        // 校验会话 ID 和用户 ID 是否匹配
+        ThrowUtils.throwIf(aiMasterData.getAiMessageSessionId() != sessionId, ErrorCode.INVALID_SESSION_ERROR);
+        ThrowUtils.throwIf(aiMasterData.getUserId() != userId, ErrorCode.INVALID_USER_ERROR);
+
+        // 更新 AI 数据体和时间
+        aiMasterData.setAiBody(aiData);
+        aiMasterData.setUpdateTime(LocalDateTime.now()); // 或者 LocalDateTime.now(ZoneId.of("UTC"))
+
+        // 执行更新操作
+        int updatedRows = aiMasterdataMapper.updateById(aiMasterData);
+        ThrowUtils.throwIf(updatedRows <= 0, ErrorCode.DATABASE_UPDATE_ERROR);
+
+        return true;  // 返回更新成功
     }
 
 
-    private AIMasterData createAiMasterData(Map<String,String> map,String data,MultipartFile file){
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:10
+     * @return: 创建并保存的 AIMasterData 对象
+     * @Param: map 包含用户相关信息的 map，data 用户提供的数据，file 上传的文件（头像等）
+     * @Description: 创建并保存 AI Master 数据，处理文件和数据并存储
+     */
+    private AIMasterData createAndSaveAiMasterData(Map<String,String> map, String data, MultipartFile file) {
         long userId = Long.parseLong(map.get("userId"));
-        QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id",userId);
-        AIMessageSession aiMessageSessionId = aiMessageSessionService.getOne(queryWrapper);
+
+        // 查询 AI 会话 ID
+        AIMessageSession aiMessageSession = aiMessageSessionService.getOne(new QueryWrapper<AIMessageSession>().eq("user_id", userId));
+        ThrowUtils.throwIf(aiMessageSession == null, ErrorCode.NOT_FOUND_ERROR, "未找到用户的 AI 会话：" + userId);
+
+        // 创建 AIMasterData 实体
         AIMasterData aiMasterData = new AIMasterData();
         aiMasterData.setUserId(userId);
-        aiMasterData.setCreateTime(LocalDateTime.now());
+        aiMasterData.setCreateTime(LocalDateTime.now()); // 可使用 UTC 时间：LocalDateTime.now(ZoneId.of("UTC"))
         aiMasterData.setUpdateTime(LocalDateTime.now());
         aiMasterData.setAiBody(map.get("aiData"));
         aiMasterData.setUserBody(data);
-        aiMasterData.setAiMessageSessionId(aiMessageSessionId.getId());
-        if(file != null){
-            Blob avatarPhoyo = null;
-            byte[] avatarBytes = null;
-            try {
-                if(file != null && !file.isEmpty()){
-                    byte[] bytes = file.getBytes();
-                    avatarPhoyo = new SerialBlob(bytes);
-                }
-                if (avatarPhoyo != null) {
-                    avatarBytes = avatarPhoyo.getBytes(1, (int) avatarPhoyo.length()); // Get the entire blob as a byte array
-                }
-                aiMasterData.setPic(avatarBytes);
-            } catch (Exception e) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型错误");
-            }
+        aiMasterData.setAiMessageSessionId(aiMessageSession.getId());
 
+        // 处理文件（头像等）
+        if (file != null && !file.isEmpty()) {
+            try {
+                byte[] avatarBytes = file.getBytes();
+                aiMasterData.setPic(avatarBytes);  // 将字节数组直接设置到 pic 字段
+            } catch (IOException e) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件读取错误");
+            }
         }
-        int insert = masterdataMapper.insert(aiMasterData);
+
+        // 插入数据库并返回
+        int insertResult = masterdataMapper.insert(aiMasterData);
+        ThrowUtils.throwIf(insertResult <= 0, ErrorCode.DATABASE_INSERT_ERROR);
+
         return aiMasterData;
     }
 
+
+
     @Override
-    public void IsAiMessagesession(Map<String,String> map,String data) {
-        Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
-        ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
-        updatedAiMasterData(map, data,null);
+    public void ensureAndUpdateAiMasterData(Map<String, String> map, String data) {
+        long userId = Long.parseLong(map.get("userId"));
+
+        // 确保会话存在
+        Boolean isAiMessageSessionExists = ensureAiMessageSessionExists(userId, data);
+        ThrowUtils.throwIf(!isAiMessageSessionExists, ErrorCode.ADD_DATABASE_ERROR, "User " + userId + " does not have an active session");
+
+        // 更新 AI Master Data
+        updatedAiMasterData(map, data, null);
     }
 
     @Override
-    public void IsAiMessagesessionForCourse(Map<String,String> map,String data) {
-        Boolean isBooleanAiMessageSession = IsBooleanAiMessageSession(map,data);
-        ThrowUtils.throwIf(!isBooleanAiMessageSession,ErrorCode.ADD_DATABASE_ERROR);
-        createAiMasterData(map, data,null);
+    public void ensureAndCreateAiMasterDataForCourse(Map<String, String> map, String data) {
+        long userId = Long.parseLong(map.get("userId"));
+
+        // 确保会话存在
+        Boolean isAiMessageSessionExists = ensureAiMessageSessionExists(userId, data);
+        ThrowUtils.throwIf(!isAiMessageSessionExists, ErrorCode.ADD_DATABASE_ERROR, "User " + userId + " does not have an active session");
+
+        // 创建并保存 AI Master Data
+        createAndSaveAiMasterData(map, data, null);
     }
 
     @Override
-    public AIMasterData IsAiMessagesession(Map<String,String> map, MultipartFile file,String title) {
-        return createAiMasterData(map,title,file);
+    public AIMasterData createAndSaveAiMasterDataWithFile(Map<String, String> map, MultipartFile file, String title) {
+        // 调用创建和保存逻辑，返回 AIMasterData 对象
+        return createAndSaveAiMasterData(map, title, file);
     }
 
 
-//    private synchronized void increase(UserDto user){
-//        QueryWrapper<Point> queryWrapper = new QueryWrapper<>();
-//        queryWrapper.eq("userId",user.getId());
-//        Point point = pointMapper.selectOne(queryWrapper);
-//        ThrowUtils.throwIf(point == null,ErrorCode.OPERATION_ERROR);
-//        ThrowUtils.throwIf(point.getPoint() < 5,ErrorCode.OPERATION_ERROR);
-//        point.setPoint(point.getPoint() - 10);
-//        pointMapper.updateById(point);
-//    }
 
     /**
-     * 获取查询包装类
-     *
-     * @param chartQueryRequest
-     * @return
+     * @Author: Mr.kimo
+     * @Date: 18:24
+     * @return:
+     * @Param:
+     * @Description: 获取所有图标，已更新版本，已弃用
      */
     private QueryWrapper<Chart> getQueryWrapper(ChartQueryRequest chartQueryRequest) {
 

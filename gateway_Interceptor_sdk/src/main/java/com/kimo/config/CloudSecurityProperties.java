@@ -4,7 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties(prefix = "spring.gateway.could")
+@ConfigurationProperties(prefix = "spring.gateway.cloud")
 public class CloudSecurityProperties { 
  
     /** 

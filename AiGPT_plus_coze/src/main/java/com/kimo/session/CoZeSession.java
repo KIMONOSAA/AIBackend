@@ -37,6 +37,13 @@ public interface CoZeSession {
     EventSource chatCompletions(String apiHostByUser, String apiKeyByUser, CouZiCompletionRequest cozeCompletionRequest, EventSourceListener eventSourceListener) throws JsonProcessingException;
 
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 17:31
+     * @return:
+     * @Param: CouZiCompletionFileRequest
+     * @Description:
+     */
     EventSource chatCompletions(String apiHostByUser, String apiKeyByUser, CouZiCompletionFileRequest cozeCompletionRequest, EventSourceListener eventSourceListener) throws JsonProcessingException;
 
 

@@ -1,6 +1,11 @@
 spring:
   config:
     import: optional:bootstrap.yml
+
+  gateway:
+    could:
+
+
 #springdoc:
 #  swagger-ui:
 #    path: /swagger-ui.html

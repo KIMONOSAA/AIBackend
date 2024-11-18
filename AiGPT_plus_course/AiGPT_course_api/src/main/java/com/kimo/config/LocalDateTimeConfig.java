@@ -32,19 +32,6 @@ public class LocalDateTimeConfig {
         return new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
-    //long转string避免精度损失
-//    @Bean
-//    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
-//        ObjectMapper objectMapper = builder.createXmlMapper(false).build();
-//        //忽略value为null 时 key的输出
-//        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-//        SimpleModule module = new SimpleModule();
-//        module.addSerializer(Long.class, ToStringSerializer.instance);
-//        module.addSerializer(Long.TYPE, ToStringSerializer.instance);
-//        objectMapper.registerModule(module);
-//        return objectMapper;
-//    }
-
 
     // 配置
     @Bean

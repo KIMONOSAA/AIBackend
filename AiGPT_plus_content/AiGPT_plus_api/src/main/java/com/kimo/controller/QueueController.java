@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * 队列测试
  * AI设定角色图表
  * @author kimo
+ * 已弃用
  *
  */
 @RestController

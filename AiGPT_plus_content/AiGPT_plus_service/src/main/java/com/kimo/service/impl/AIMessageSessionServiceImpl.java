@@ -21,7 +21,6 @@ import com.kimo.model.dto.user.UserDto;
 import com.kimo.model.entity.AIMessageSession;
 import com.kimo.model.entity.AIRole;
 import com.kimo.service.AIMessageSessionService;
-import com.kimo.utils.RedisUtils;
 import com.kimo.utils.ServletUtils;
 import com.kimo.utils.SqlUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,8 +59,6 @@ public class AIMessageSessionServiceImpl extends ServiceImpl<AIMessageSessionMap
     @Autowired
     private RedissonClient redissonClient;
 
-    @Autowired
-    private RedisUtils redisUtils;
 
     @Autowired
     private RedisTemplate<String,String> redisTemplate;
@@ -89,7 +86,7 @@ public class AIMessageSessionServiceImpl extends ServiceImpl<AIMessageSessionMap
     @Override
     public UserDto getUserDtoForRedisOrLock(HttpServletRequest request,String type){
         UserDto userDto = new UserDto();
-        Object user = servletUtils.getHeaderRedisForUser(request, type);
+        UserDto user = servletUtils.getHeaderRedisForUser(request, type);
 
         if (user == null) {
             String headerKey = servletUtils.getHeaderKey(request, type);

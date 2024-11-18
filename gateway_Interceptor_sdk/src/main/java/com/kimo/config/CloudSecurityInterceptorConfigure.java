@@ -1,8 +1,9 @@
-package com.kimo.interceptor;
+package com.kimo.config;
 
-import com.kimo.config.CloudSecurityProperties;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -12,6 +13,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class CloudSecurityInterceptorConfigure implements WebMvcConfigurer {
 
     private CloudSecurityProperties properties;
+
+
 
 
     @Autowired

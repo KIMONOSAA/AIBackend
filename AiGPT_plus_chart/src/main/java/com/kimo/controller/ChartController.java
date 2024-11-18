@@ -213,13 +213,13 @@ public class ChartController {
         return ResultUtils.success(result);
     }
 
+
     /**
-     * 智能分析异步
-     *
-     * @param multipartFile
-     * @param genChartByAI
-     * @param request
-     * @return
+     * @Author: Mr.kimo
+     * @Date: 17:51
+     * @return:
+     * @Param:
+     * @Description: 版本更新，已经弃用
      */
     @PostMapping("/gen/rabbit/async")
     public BaseResponse<BiResponse> genChartByAIRabbitMQ(@RequestPart("file") MultipartFile multipartFile,GenChartyByAIRequest genChartByAI, HttpServletRequest request) {
@@ -264,11 +264,11 @@ public class ChartController {
         ThrowUtils.throwIf(courseIId.isBlank(), ErrorCode.ADD_DATABASE_ERROR);
         Map<String, String> courseInfoDataForCouZi = null;
         try {
-            courseInfoDataForCouZi = chartService.getCourseInfoDataForCouZi(chartData,botId,token, courseIId, request);
+            courseInfoDataForCouZi = chartService.fetchCourseInfoForChart(chartData,botId,token, courseIId, request);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        chartService.IsAiMessagesessionForCourse(courseInfoDataForCouZi,title);
+        chartService.ensureAndCreateAiMasterDataForCourse(courseInfoDataForCouZi,title);
         return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
     }
 
@@ -286,7 +286,7 @@ public class ChartController {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        AIMasterData aiMasterData = chartService.IsAiMessagesession(courseInfoDataForCouZi, multipartFile, "图片识别");
+        AIMasterData aiMasterData = chartService.createAndSaveAiMasterDataWithFile(courseInfoDataForCouZi, multipartFile, "图片识别");
         courseInfoDataForCouZi.put("aiMaster",aiMasterData.getId().toString());
         courseInfoDataForCouZi.put("aisession",aiMasterData.getAiMessageSessionId().toString());
         return ResultUtils.success(courseInfoDataForCouZi);
@@ -306,13 +306,16 @@ public class ChartController {
         gouZiAdditionalMessages.setContent(gouZiAdditionalMessagesAndMaster.getContent());
         Long masterId = gouZiAdditionalMessagesAndMaster.getMasterId();
         Long sessionId = gouZiAdditionalMessagesAndMaster.getSessionId();
+        ThrowUtils.throwIf(masterId == null,ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(sessionId == null,ErrorCode.NOT_FOUND_ERROR);
         Map<String, String> courseInfoDataForCouZi = null;
         try {
-            courseInfoDataForCouZi = chartService.getCourseInfoDataForCouZi(gouZiAdditionalMessages,botId,token, courseIId, request);
+            courseInfoDataForCouZi = chartService.fetchCourseInfoForChart(gouZiAdditionalMessages,botId,token, courseIId, request);
             courseInfoDataForCouZi.put("masterId",masterId.toString());
             courseInfoDataForCouZi.put("sessionId",sessionId.toString());
-            chartService.IsAiMessagesession(courseInfoDataForCouZi,"图片识别");
+            chartService.ensureAndUpdateAiMasterData(courseInfoDataForCouZi,"图片识别");
         } catch (Exception e) {
+            log.info("错误：",e.getMessage());
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
@@ -337,7 +340,7 @@ public class ChartController {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        chartService.IsAiMessagesession(courseInfoDataForCouZi,title);
+        chartService.ensureAndUpdateAiMasterData(courseInfoDataForCouZi,title);
         return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
     }
 

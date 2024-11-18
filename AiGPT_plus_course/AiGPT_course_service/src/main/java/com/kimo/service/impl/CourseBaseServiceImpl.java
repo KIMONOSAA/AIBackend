@@ -56,6 +56,7 @@ import java.util.zip.GZIPOutputStream;
 import static com.kimo.constant.CaffeineConstant.*;
 import static com.kimo.constant.RedisConstant.MAX_INSERT_REDIS;
 
+
 /**
  * @author Mr.kimo
  */
@@ -104,129 +105,160 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
 
     @Override
-    public Wrapper<CourseBase> getQueryWrapper(Long id,QueryCourseParamsDto queryCourseParams, HttpServletRequest request) {
-
-        // Use QueryWrapper instead of LambdaQueryWrapper to support dynamic field names
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:32
+     * @return: com.baomidou.mybatisplus.core.conditions.Wrapper<com.kimo.model.po.CourseBase>
+     * @Param: [java.lang.Long, com.kimo.model.dto.QueryCourseParamsDto, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 分页获取当前用户的课程信息
+     */
+    public Wrapper<CourseBase> getQueryWrapper(Long id, QueryCourseParamsDto queryCourseParams, HttpServletRequest request) {
+        // 创建 QueryWrapper
         QueryWrapper<CourseBase> queryWrapper = new QueryWrapper<>();
-        // 构建查询条件，根据课程名称查询
-        queryWrapper.like(StringUtils.isNotEmpty(queryCourseParams.getCourseName()), "name", queryCourseParams.getCourseName());
-        // 构建查询条件，根据课程审核状态查询
-        queryWrapper.eq(StringUtils.isNotEmpty(queryCourseParams.getAuditStatus()), "audit_status", queryCourseParams.getAuditStatus());
-        queryWrapper.eq(StringUtils.isNotEmpty(queryCourseParams.getPublishStatus()), "status", queryCourseParams.getPublishStatus());
-        // 根据课程发布状态查询（根据需要进行修改）
-        queryWrapper.eq(SqlConstants.COURSE_USERID, id);
 
-        // 获取排序字段和排序顺序
-        String sortField = queryCourseParams.getSortField();
-        String sortOrder = queryCourseParams.getSortOrder();
+        // 添加查询条件
+        addConditionIfNotEmpty(queryWrapper, "name", queryCourseParams.getCourseName(), "like");
+        addConditionIfNotEmpty(queryWrapper, "audit_status", queryCourseParams.getAuditStatus(), "eq");
+        addConditionIfNotEmpty(queryWrapper, "status", queryCourseParams.getPublishStatus(), "eq");
+        queryWrapper.eq(SqlConstants.COURSE_USERID, id); // 根据课程用户ID查询
 
-        // 拼接查询条件，判断排序顺序并使用相应的方法
-        if (SqlUtils.validSortField(sortField)) {
-            if (CommonConstant.SORT_ORDER_ASC.equals(sortOrder)) {
-                queryWrapper.orderByAsc(sortOrder);
-            } else {
-                queryWrapper.orderByDesc(sortOrder);
-            }
-        }
+        // 排序处理
+        handleSort(queryWrapper, queryCourseParams.getSortField(), queryCourseParams.getSortOrder());
+
         return queryWrapper;
     }
 
+    /**
+     * 判断字段是否为空，若不为空则添加对应的查询条件。
+     */
+    private void addConditionIfNotEmpty(QueryWrapper<CourseBase> queryWrapper, String column, String value, String operator) {
+        if (StringUtils.isNotEmpty(value)) {
+            if ("like".equals(operator)) {
+                queryWrapper.like(column, value);
+            } else if ("eq".equals(operator)) {
+                queryWrapper.eq(column, value);
+            }
+        }
+    }
+
+    /**
+     * 处理排序逻辑
+     */
+    private void handleSort(QueryWrapper<CourseBase> queryWrapper, String sortField, String sortOrder) {
+        if (SqlUtils.validSortField(sortField)) {
+            if (CommonConstant.SORT_ORDER_ASC.equals(sortOrder)) {
+                queryWrapper.orderByAsc(sortField); // 按升序排序
+            } else if (CommonConstant.SORT_ORDER_DESC.equals(sortOrder)) {
+                queryWrapper.orderByDesc(sortField); // 按降序排序
+            }
+        } else {
+            // 若排序字段无效，可以根据需求抛出异常或使用默认排序
+            throw new BusinessException(ErrorCode.INVALID_SORT_FIELD, "无效的字段：" + sortField);
+        }
+    }
+
+
+
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:33
+     * @return: com.baomidou.mybatisplus.core.conditions.Wrapper<com.kimo.model.po.CourseBase>
+     * @Param: [com.kimo.model.dto.CoursePublishListDto, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 分页获取所有课程信息
+     */
     public Wrapper<CourseBase> getQueryWrapperList(CoursePublishListDto coursePublishListDto, HttpServletRequest request) {
         QueryWrapper<CourseBase> queryWrapper = new QueryWrapper<>();
 
-//        queryWrapper.lambda().like(StringUtils.isNotEmpty(coursePublishListDto.getName()), CourseBase::getName, coursePublishListDto.getName());
-
         queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getTags()), CourseBase::getTags, coursePublishListDto.getTags());
 
-//        queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getBrowses().toString()), CourseBase::getBrowses, coursePublishListDto.getBrowses());
-
-//        queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getId().toString()),CourseBase::getId, coursePublishListDto.getId());
-
         queryWrapper.eq("status", "203002");
-
-//        queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getGrade()),CourseBase::getGrade, coursePublishListDto.getGrade());
 
         // 获取排序字段和排序顺序
         String sortField = coursePublishListDto.getSortField();
         String sortOrder = coursePublishListDto.getSortOrder();
 
-        // 拼接查询条件，判断排序顺序并使用相应的方法
-        if (SqlUtils.validSortField(sortField)) {
-            if (CommonConstant.SORT_ORDER_ASC.equals(sortOrder)) {
-                queryWrapper.orderByAsc(sortField);
-            } else {
-                queryWrapper.orderByDesc(sortField);
-            }
-        }
+        handleSort(queryWrapper, sortField, sortOrder);
         return queryWrapper;
     }
 
+
+
     @Override
-    public UserDto getUserDtoForRedisOrLock(HttpServletRequest request,String type){
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:36
+     * @return: com.kimo.model.dto.UserDto
+     * @Param: [jakarta.servlet.http.HttpServletRequest, java.lang.String]
+     * @Description: redis获取用户
+     */
+    public UserDto getUserDtoForRedisOrLock(HttpServletRequest request, String type) {
         UserDto userDto = new UserDto();
+        // 尝试从Redis中获取用户数据
         Object user = servletUtils.getHeaderRedisForUser(request, type);
 
         if (user == null) {
             String headerKey = servletUtils.getHeaderKey(request, type);
-            String redis_user_key =  CAFFEINE_USER + headerKey;
+            String redisUserKey = CAFFEINE_USER + headerKey;
+
             if (StringUtils.isNotBlank(headerKey)) {
-                RLock lock = redissonClient.getLock(CAFFEINE_USER_LOCKED + headerKey);
-                boolean isLocked = false;
-                try {
-                    // 尝试获取锁，等待10秒，锁超时1秒自动释放
-                    isLocked = lock.tryLock(10, 1, TimeUnit.SECONDS);
-                    if (isLocked) {
-                        String username = servletUtils.getHeader(request, type);
-                        userDto = userClient.GobalGetLoginUser(username);
-                        // 如果成功获取锁，进行数据库查询和缓存更新
-                        if (userDto == null) {
-                            // 将空值写入redis 防止缓存穿透
-                            redisTemplate.opsForValue().set(redis_user_key, "", 1L, TimeUnit.HOURS);
-                            throw new BusinessException(ErrorCode.USER_IS_NOT); // 返回 null 表示没有找到课程
-                        }
-                        syncToRedis(redis_user_key,userDto);
-                    }
-                } catch (InterruptedException e) {
-                    throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-                }finally {
-                    if (isLocked){
-                        lock.unlock();
-                    }
+                // 尝试获取分布式锁，避免缓存穿透
+                if (tryLockAndFetchData(headerKey, redisUserKey, request, type, userDto)) {
+                    return userDto;
                 }
             }
-
-        }else {
-
-            BeanUtils.copyProperties(user,userDto);
-
+        } else {
+            // 从Redis中成功获取，复制属性
+            BeanUtils.copyProperties(user, userDto);
         }
+
         return userDto;
     }
 
-    public void getUserDtoForRedis(UserDto userDto,HttpServletRequest request,String type){
-        Object user = servletUtils.getHeaderRedisForUser(request, type);
-        if (user == null) {
-            String headerKey = servletUtils.getHeaderKey(request, type);
-            if (StringUtils.isNotBlank(headerKey)) {
+    /**
+     * 尝试获取分布式锁并查询数据库更新Redis缓存
+     */
+    private boolean tryLockAndFetchData(String headerKey, String redisUserKey, HttpServletRequest request, String type, UserDto userDto) {
+        RLock lock = redissonClient.getLock(CAFFEINE_USER_LOCKED + headerKey);
+        boolean isLocked = false;
+        try {
+            // 尝试获取锁，等待10秒，锁超时1秒自动释放
+            isLocked = lock.tryLock(10, 1, TimeUnit.SECONDS);
+            if (isLocked) {
                 String username = servletUtils.getHeader(request, type);
                 userDto = userClient.GobalGetLoginUser(username);
-                // 如果成功获取锁，进行数据库查询和缓存更新
-                if (userDto == null) {
-                    // 将空值写入redis 防止缓存穿透
-                    redisTemplate.opsForValue().set(headerKey, "", 1L, TimeUnit.HOURS);
-                    throw new BusinessException(ErrorCode.USER_IS_NOT); // 返回 null 表示没有找到课程
-                }
-                syncToCache(headerKey,userDto);
 
+                // 用户数据为空，防止缓存穿透
+                if (userDto == null) {
+                    redisTemplate.opsForValue().set(redisUserKey, "", 1L, TimeUnit.HOURS);
+                    throw new BusinessException(ErrorCode.USER_IS_NOT); // 返回 null 表示没有找到用户
+                }
+                syncToRedis(redisUserKey, userDto); // 更新到 Redis
+                return true;
             }
-        }else {
-            BeanUtils.copyProperties(user,userDto);
+        } catch (InterruptedException e) {
+            // 异常处理，添加日志
+            log.error("尝试锁定时出错: {}", e.getMessage(), e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "锁定中断");
+        } finally {
+            if (isLocked) {
+                lock.unlock();
+            }
         }
+        return false;
     }
+
+
 
     @Override
     @Transactional
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:36
+     * @return: com.kimo.model.dto.CourseBaseInfoDto
+     * @Param: [com.kimo.model.dto.AddCourseDto, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 创建课程
+     */
     public CourseBaseInfoDto createCourseBase( AddCourseDto addCourseDto,HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
 //        UserDto userDto = userClient.GobalGetLoginUser(username);
@@ -264,12 +296,15 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     //根据课程id查询课程基本信息，包括基本信息和营销信息
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:37
+     * @return: com.kimo.model.dto.CourseBaseInfoDto
+     * @Param: [java.lang.Long]
+     * @Description: 从caffeine和redis获取课程信息和营销信息
+     */
     public CourseBaseInfoDto getCourseBaseInfo(Long courseId) {
         CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
-//        CourseBase courseBase = courseBaseMapper.selectById(courseId);
-//        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
-//        BeanUtils.copyProperties(courseBase, courseBaseInfoDto);
-//        BeanUtils.copyProperties(courseMarket, courseBaseInfoDto);
         String caffeineCourseIdKey = CAFFEINE_COURSE + courseId;
         String caffeineCourseMarketKey = CAFFEINE_COURSE_MARKET + courseId;
 
@@ -283,9 +318,6 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         if (courseMarketCache != null) {
             BeanUtils.copyProperties(courseMarketCache, courseBaseInfoDto);
         }
-
-//        long statTime = System.currentTimeMillis();
-//        log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "当前开始时间:" + statTime + "ms");
 
         if (courseBaseCache == null || courseMarketCache == null){
             RLock lock = redissonClient.getLock(CAFFEINE_COURSE_MARKET_LOCKED + courseId);
@@ -307,9 +339,6 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
             }
         }
 
-//        long endTime = System.currentTimeMillis();
-//        log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "当前结束时间:" + endTime + "ms");
-//        log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "花费时间" + (endTime - statTime)  + "ms");
         return courseBaseInfoDto; // 返回最终结果
     }
 
@@ -364,6 +393,8 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
             commonCaffeine.put(cacheKey, data); // 同步到 Caffeine 缓存
         }
     }
+
+
     private void syncToCacheForCompress(String cacheKey, Object data) {
         if (data != null) {
             byte[] compressedData = serializeForCompress(data);
@@ -387,9 +418,10 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         } catch (JsonProcessingException e) {
             throw new BusinessException(ErrorCode.JSON_PROCESSING_EXCEPTION);
         }
-//        return data.toString();
     }
 
+
+    // 序列化方法
     private byte[] serializeForCompress(Object data) {
         try {
             String JsonData = objectMapper.writeValueAsString(data);
@@ -398,9 +430,15 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.JSON_PROCESSING_EXCEPTION);
         }
-//        return data.toString();
     }
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:39
+     * @return:
+     * @Param:
+     * @Description: 压缩
+     */
     private byte[] compress(String data) throws Exception {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
@@ -408,6 +446,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         }
         return byteArrayOutputStream.toByteArray();
     }
+
 
     // 泛型序列化方法
     private <T> T deserialize(String redisData, Class<T> clazz) {
@@ -419,6 +458,13 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     }
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:39
+     * @return: com.kimo.model.dto.CourseBaseInfoDto
+     * @Param: [com.kimo.model.dto.EditCourseDto, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 修改课程信息
+     */
     public CourseBaseInfoDto updateCourseBase(EditCourseDto editCourseDto,HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
@@ -453,6 +499,13 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     }
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:40
+     * @return: java.lang.Boolean
+     * @Param: []
+     * @Description: 获取热门课程
+     */
     public Boolean getHotCoursesBase() {
         int courseCount = courseBaseMapper.getCourseCount();
         if(courseCount == 0){
@@ -469,40 +522,15 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     @Override
     public CourseBase getCourseBaseInfoByRedis(Long courseId) {
-        CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
-//        CourseBase courseBase = courseBaseMapper.selectById(courseId);
-//        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
-//        BeanUtils.copyProperties(courseBase, courseBaseInfoDto);
-//        BeanUtils.copyProperties(courseMarket, courseBaseInfoDto);
         String caffeineCourseIdKey = CAFFEINE_COURSE + courseId;
 
         // 从 Caffeine 或 Redis 获取缓存数据
         CourseBase courseBaseCache = (CourseBase) getFromCaffeineOrRedis(caffeineCourseIdKey, CourseBase.class);
 
         if (courseBaseCache != null) {
-//            BeanUtils.copyProperties(courseBaseCache, courseBaseInfoDto);
             return courseBaseCache;
         }
 
-
-//        RLock lock = redissonClient.getLock(CAFFEINE_COURSE_MARKET_LOCKED + courseId);
-//        boolean isLocked = false;
-//        try {
-//            // 尝试获取锁，等待10秒，锁超时1秒自动释放
-//            isLocked = lock.tryLock(10, 1, TimeUnit.SECONDS);
-//            if (isLocked) {
-//                // 如果成功获取锁，进行数据库查询和缓存更新
-//                return fetchAndUpdateCourseDataOrRedis(courseId, courseBaseInfoDto, caffeineCourseIdKey);
-//
-//            }
-//        } catch (InterruptedException e) {
-////            Thread.currentThread().interrupt(); // 重置中断状态
-//            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-//        }finally {
-//            if (isLocked){
-//                lock.unlock();
-//            }
-//        }
         return null;
     }
 
@@ -512,7 +540,16 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
         return courseBase;
     }
+
+
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:41
+     * @return: java.lang.Boolean
+     * @Param: [java.lang.Long, java.lang.Long, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 解除章节和media的关系
+     */
     public Boolean deletedTeachplanOrMedia(Long teachId,Long courseId, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
@@ -542,6 +579,13 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:42
+     * @return: java.util.List<com.kimo.model.dto.TeachplanListDto>
+     * @Param: [java.lang.Long]
+     * @Description: 从redis获取课程计划
+     */
     public List<TeachplanListDto> findTeachplanTreeRedis(Long courseId) {
         String redis_teachplan = REDIS_COURSE_TEACHPLAN + courseId;
         List<TeachplanListDto> teachplanListDtos =  getFromRedisByte(redis_teachplan);
@@ -577,7 +621,15 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         return List.of();
     }
 
+
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:42
+     * @return: java.lang.Boolean
+     * @Param: [java.lang.Long, jakarta.servlet.http.HttpServletRequest]
+     * @Description: 删除课程
+     */
     public Boolean deletedCourseBase(Long courseId, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
@@ -588,22 +640,14 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         return true;
     }
 
-    private List<TeachplanListDto> getFromRedis(String redisTeachplan) {
-        List<TeachplanListDto> data = null;
-        // 如果 Caffeine 没有，查 Redis
-        String redisData = redisTemplate.opsForValue().get(redisTeachplan);
-        if(StringUtils.isNotBlank(redisData)){
-            data = redisSerialize(redisData);
-            return data;
-        }
-        // 判断命中的是否是空值
-        if (redisData != null) {
-            // 返回一个错误信息
-            return null;
-        }
-        return data;
-    }
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:43
+     * @return:
+     * @Param:
+     * @Description: 从redis获取章节列表
+     */
     private List<TeachplanListDto> getFromRedisByte(String redisTeachplan) {
         List<TeachplanListDto> data = null;
         // 查 Redis
@@ -624,6 +668,13 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         return data;
     }
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:43
+     * @return:
+     * @Param:
+     * @Description: 解压缩
+     */
     private byte[] decompressForRedis(byte[] redisData) throws IOException {
         ByteArrayInputStream bais = new ByteArrayInputStream(redisData);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -638,6 +689,13 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     }
 
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 18:44
+     * @return:
+     * @Param:
+     * @Description: 章节的序列化
+     */
     private List<TeachplanListDto> redisSerialize(String redisData) {
         try {
             return objectMapper.readValue(redisData, new TypeReference<List<TeachplanListDto>>() {});
@@ -648,22 +706,6 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         }
     }
 
-    private CourseBase fetchAndUpdateCourseDataOrRedis(Long courseId, CourseBaseInfoDto courseBaseInfoDto, String caffeineCourseIdKey) {
-//        long statTime = System.currentTimeMillis();
-        CourseBase courseBase = courseBaseMapper.selectById(courseId);
-        if (courseBase == null) {
-            // 将空值写入redis 防止缓存穿透
-            redisTemplate.opsForValue().set(caffeineCourseIdKey, "", 1L, TimeUnit.HOURS);
-            return null; // 返回 null 表示没有找到课程
-        }
-
-        // 更新缓存
-        syncToCache(caffeineCourseIdKey, courseBase);
-
-        return courseBase;
-//        long endTime = System.currentTimeMillis();
-//        log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "花费时间" + (endTime - statTime)  + "ms");
-    }
 
     private void handleSaveRedis(List<CourseBase> courseListByPage) {
         String caffeineCourseIdKey = null;
@@ -679,6 +721,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         redisTemplate.delete(caffeineCourseIdKey);
         redisTemplate.delete(caffeineCourseMarketKey);
     }
+
     //保存课程营销信息
     private int saveCourseMarket(CourseMarket courseMarketNew){
         //收费规则

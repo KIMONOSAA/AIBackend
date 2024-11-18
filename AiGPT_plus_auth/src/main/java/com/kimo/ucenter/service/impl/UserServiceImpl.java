@@ -32,6 +32,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -100,6 +101,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private ServletUtils  servletUtils;
 
     @Autowired
+    @Qualifier("redisTemplate")
     private RedisTemplate<String,String> redisTemplate;
 
     @Autowired

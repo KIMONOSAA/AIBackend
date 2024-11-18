@@ -31,6 +31,13 @@ public class AccuracyChartServiceImpl extends ServiceImpl<AccuracyChartMapper, A
     private AccuracyChartMapper accuracyChartMapper;
 
     @Override
+    /**
+     * @Author: Mr.kimo
+     * @Date: 17:04
+     * @return: com.kimo.model.dto.po.AccuracyChart
+     * @Param: [jakarta.servlet.http.HttpServletRequest]
+     * @Description: 根据用户获取准确率表
+     */
     public AccuracyChart getAccuracyChartById(HttpServletRequest request) {
         String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
         UserDto user = userClient.GobalGetLoginUser(username);

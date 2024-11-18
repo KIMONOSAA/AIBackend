@@ -6,22 +6,23 @@ package com.kimo.config;
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ErrorCode;
 import com.kimo.common.ResultUtils;
-import com.kimo.constant.GatewayConstant;
+
 import com.kimo.utils.JwtService;
+
 
 import com.kimo.utils.RedisUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
-import org.apache.logging.log4j.util.Base64Util;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import com.alibaba.fastjson.JSON;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
-import org.springframework.context.annotation.Bean;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
+
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -36,8 +37,8 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Base64;
 
+import static com.kimo.constant.GatewayConstant.GATEWAY_TOKEN_HEADER;
 
 
 /**
@@ -52,10 +53,8 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
 
 
     @Autowired
-    private RedisTemplate<String,String> redisTemplate;
-
-    @Autowired
     private RedisUtils redisUtils;
+
 
     /**
      * 将 JWT 鉴权失败的消息响应给客户端
@@ -120,7 +119,7 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
         }
 //        String jwtToken = jwtService.generateToken(date,userEmail,null);
 //        redisUtils.storeTokenInRedis(jwtToken,userEmail);
-//        ServerHttpRequest build = exchange.getRequest().mutate().header(GatewayConstant.GATEWAY_TOKEN_HEADER, userEmail).build();
+//        ServerHttpRequest build = exchange.getRequest().mutate().header(GATEWAY_TOKEN_HEADER, userEmail).build();
 //        ServerWebExchange newExchange = exchange.mutate().request(build).build();
         return chain.filter(exchange);
     }

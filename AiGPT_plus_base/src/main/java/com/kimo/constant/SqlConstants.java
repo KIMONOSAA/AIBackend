@@ -4,25 +4,25 @@ package com.kimo.constant;
  */
 public interface SqlConstants {
 
-    String USER_ID = "user_id";
-    String AI_MESSAGE_SESSION_ID = "ai_message_session_id";
-    String CHART_ID = "id";
-    String CHART_NAME = "name";
-    String CHART_GOAL = "goal";
-    String CHART_TYPE = "chartType";
-    String EMAIL_NAME = "email";
-    String USERID_NAME = "userId";
-    String SORT = "ORDER BY RAND()";
-    String FILENAME = "filename";
-    String FILE_TYPE = "file_type";
-    String FILE_TAGS = "tags";
-    String MANAGER_ID = "manager_id";
-    String COMPANY_ID = "company_id";
-    String COURSE_USERID = "manager_id";
+    public static final String USER_ID = "user_id";
+    public static final String AI_MESSAGE_SESSION_ID = "ai_message_session_id";
+    public static final String CHART_ID = "id";
+    public static final String CHART_NAME = "name";
+    public static final String CHART_GOAL = "goal";
+    public static final String CHART_TYPE = "chartType";
+    public static final String EMAIL_NAME = "email";
+    public static final String USERID_NAME = "userId";
+    public static final String SORT = "ORDER BY RAND()";
+    public static final String FILENAME = "filename";
+    public static final String FILE_TYPE = "file_type";
+    public static final String FILE_TAGS = "tags";
+    public static final String MANAGER_ID = "manager_id";
+    public static final String COMPANY_ID = "company_id";
+    public static final String COURSE_USERID = "manager_id";
 
-    String SUBJECTS = "subjects";
-    String QUALIFICATION = "qualification";
-    String PRACTICESTATUS = "practice_status";
-    String USERERROR = "user_error";
-    String USERRIGHT = "user_right";
+    public static final String SUBJECTS = "subjects";
+    public static final String QUALIFICATION = "qualification";
+    public static final String PRACTICESTATUS = "practice_status";
+    public static final String USERERROR = "user_error";
+    public static final String USERRIGHT = "user_right";
 }

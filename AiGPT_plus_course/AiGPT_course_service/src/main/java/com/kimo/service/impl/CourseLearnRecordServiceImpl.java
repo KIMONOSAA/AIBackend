@@ -63,49 +63,6 @@ public class CourseLearnRecordServiceImpl extends ServiceImpl<CourseLearnRecordM
         CourseLearnRecord courseLearnRecord = courseLearnRecordMapper.selectOne(queryWrapper);
         ThrowUtils.throwIf(courseLearnRecord == null, ErrorCode.NOT_FOUND_ERROR);
 
-//        String courseTeachplan = courseLearnRecord.getCourseTeachplan();
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        List<CourseTeachPlanRecord> list;
-//
-//        try {
-//            // 反序列化 JSON
-//            if (!StringUtils.isEmpty(courseTeachplan)) {
-//                list = objectMapper.readValue(courseTeachplan, new TypeReference<List<CourseTeachPlanRecord>>() {});
-//            } else {
-//                list = new ArrayList<>();
-//            }
-//            // 将列表转换为以 ID 为键的 Map
-//            Map<Integer, CourseTeachPlanRecord> recordMap = new HashMap<>();
-//            for (CourseTeachPlanRecord record : list) {
-//                recordMap.put(record.getId(), record);
-//            }
-//
-//// 获取 CourseTeachPlanRecord
-//            int idToFind = courseLearnRecordTimeDto.getCourseTeachPlanRecord().getId();
-//            CourseTeachPlanRecord courseTeachPlanRecord = recordMap.get(idToFind);
-//
-//            if (courseTeachPlanRecord == null) {
-//                // 如果未找到，添加到列表
-//                list.add(courseLearnRecordTimeDto.getCourseTeachPlanRecord());
-//            }else {
-//                list.remove(courseTeachPlanRecord);
-//                courseTeachPlanRecord.setDescription(courseLearnRecordTimeDto.getCourseTeachPlanRecord().getDescription());
-//                courseTeachPlanRecord.setLabel(courseLearnRecordTimeDto.getCourseTeachPlanRecord().getLabel());
-//                courseTeachPlanRecord.setPname(courseLearnRecordTimeDto.getCourseTeachPlanRecord().getPname());
-//                courseTeachPlanRecord.setTimelength(courseLearnRecordTimeDto.getCourseTeachPlanRecord().getTimelength());
-//                courseTeachPlanRecord.setTotalTime(courseLearnRecordTimeDto.getCourseTeachPlanRecord().getTotalTime());
-//                list.add(courseTeachPlanRecord);
-//            }
-////            System.out.println(list.toString());
-////            if (courseTeachPlanRecord == null){
-////                list.add(courseLearnRecordTimeDto.getCourseTeachPlanRecord());
-////            }
-//            String jsonOutput = objectMapper.writeValueAsString(list);
-//            courseLearnRecord.setCourseTeachplan(jsonOutput);
-//        }catch (JsonProcessingException e) {
-//            throw new BusinessException(ErrorCode.JSON_PROCESSING_EXCEPTION);
-//        }
-//        int i = courseLearnRecordMapper.updateById(courseLearnRecord);
         String courseTeachplan = courseLearnRecord.getCourseTeachplan();
         ObjectMapper objectMapper = new ObjectMapper();
         List<CourseTeachPlanRecord> list;

@@ -28,14 +28,17 @@ import org.springframework.web.bind.annotation.*;
 
 
 
-/**
- * AI会话
- *
- * @author  kimo
- */
+
 @RestController
 @RequestMapping("/content")
 @Slf4j
+/**
+ * @Author: Mr.kimo
+ * @Date: 18:25
+ * @return:
+ * @Param:
+ * @Description: 已更新版本，当前模块用到的模块已经移到到chart这个服务中
+ */
 public class AIMessageSessionController {
 
     @Autowired

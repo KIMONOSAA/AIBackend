@@ -5,7 +5,7 @@ package com.kimo.constant;
  */
 public interface CourseConstant {
 
-    String COURSE_BROWSES = "course_browses:";
+    public static final String COURSE_BROWSES = "course_browses:";
 
-    String COURSE_LOCK = "course:lock:";
+    public static final String COURSE_LOCK = "course:lock:";
 }

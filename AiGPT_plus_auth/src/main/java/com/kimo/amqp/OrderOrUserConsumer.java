@@ -1,10 +1,7 @@
 package com.kimo.amqp;
 
 import com.alibaba.fastjson2.JSON;
-import com.kimo.common.PageRequest;
 
-
-import com.kimo.constant.RedisConstant;
 import com.kimo.messagesdk.model.po.MqMessage;
 import com.kimo.ucenter.service.UserService;
 import com.rabbitmq.client.Channel;
@@ -23,8 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.amqp.core.Message;
 import java.io.IOException;
 
-
 import static com.kimo.constant.RabbitMQConstant.PAYNOTIFY_QUEUE;
+import static com.kimo.constant.RedisConstant.ORDERS_USER_KEY;
 
 
 /**
@@ -58,7 +55,7 @@ public class OrderOrUserConsumer {
         String MemberType = mqMessage.getBusinessKey2();
         //用户id
         String userId = mqMessage.getBusinessKey3();
-        RLock lock = redissonClient.getLock(RedisConstant.ORDERS_USER_KEY + userId);
+        RLock lock = redissonClient.getLock(ORDERS_USER_KEY + userId);
         lock.lock();
         try {
             //根据消息内容，跟新个人记录和积分

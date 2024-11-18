@@ -114,35 +114,42 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
         return resultMap;
     }
 
+
     private void extractedCouZiResults(AIMasterData chartData, HttpServletRequest request, String botId, String user, String token, HashMap<String, String> resultMap) throws JsonProcessingException, InterruptedException {
-        // 获取用户数据
+        // Redis获取用户数据
         UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null, ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
         chartData.setUserId(userId);
         resultMap.put("userId", String.valueOf(userId));
+
+        //更新积分
         aiMessageSessionService.fetchUpdatePoint(PointNumber, userId);
 
         List<String> answerContents = new ArrayList<>();
+
+        //获取最后AI返回的所有数据
         String lastAnswerContent = null;
 
-        // 1. 创建请求参数
+        //创建请求参数
         GouZiAdditionalMessages goZeAdditionalMessages = createGouZiAdditionalMessages(chartData);
         ArrayList<GouZiAdditionalMessages> goZeAdditionalMessages1 = new ArrayList<>();
         goZeAdditionalMessages1.add(goZeAdditionalMessages);
 
-        // 2. 创建并配置请求
+        // 创建并配置请求
         CouZiCompletionRequest couZiCompletionRequest = CreateCouZiCompletionRequest(true, user, true, botId, goZeAdditionalMessages1);
         CoZeConfiguration yuanQiConfiguration = new CoZeConfiguration();
         configExtracted(token, yuanQiConfiguration);
 
-        // 3. 创建会话工厂
+        // 创建会话工厂
         DefaultCoZeSessionFactory factory = new DefaultCoZeSessionFactory(yuanQiConfiguration);
         this.coZeSession = factory.openSession();
         log.info("openAiSession:{}", coZeSession);
 
-        // 4. 使用 CountDownLatch 等待异步结果
+        // 使用 CountDownLatch 等待异步结果
         CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        //调用AI
         CouZiEventSourceListener couZiEventSourceListener = new CouZiEventSourceListener(userId, webSocketHandler, answerContents, countDownLatch);
 
         EventSource eventSource = coZeSession.chatCompletions(token, null, couZiCompletionRequest, couZiEventSourceListener);
@@ -222,7 +229,11 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
         long userId = Long.parseLong(map.get("userId"));
         QueryWrapper<AIMessageSession> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id",userId);
+
+        //获取用户会话（一个用户只有一个会话）
         AIMessageSession aiMessageSessionId = aiMessageSessionMapper.selectOne(queryWrapper);
+
+        //为空就创建
         if(aiMessageSessionId == null){
             AIMessageSession aiMessageSession1 = new AIMessageSession();
             aiMessageSession1.setUserId(userId);
@@ -246,6 +257,7 @@ public class AIMasterDataServiceImpl extends ServiceImpl<AIMasterdataMapper, AIM
      * @Description: 分页列出所以用户问答数据
      */
     public Wrapper<AIMasterData> getQueryWrapper(AIMasterDataQueryRequest aiMasterDataQueryRequest, HttpServletRequest request) {
+        //redis获取用户信息
         UserDto userDtoForRedisOrLock = aiMessageSessionService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();

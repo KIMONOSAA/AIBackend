@@ -107,18 +107,6 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
             throw new BusinessException(ErrorCode.IS_NOT_MEMBER);
         }
 
-//        CourseLearnRecord courseLearnRecord = new CourseLearnRecord();
-//        courseLearnRecord.setCourseName(courseBaseInfo.getName());
-//        courseLearnRecord.setUserId(userDto.getId());
-//        courseLearnRecord.setUserName(userDto.getUserName());
-//
-//        Long courseRecordId = courseLearnRecordDto.getCourseRecordId();
-//        if(courseRecordId <= 0) {
-//            courseLearnRecordMapper.insert(courseLearnRecord);
-//        } else {
-//            courseLearnRecord.setId(courseRecordId);
-//            courseLearnRecordMapper.updateById(courseLearnRecord);
-//        }
         String courseBroweseId = CourseConstant.COURSE_BROWSES + userId + courseBaseInfo.getId();
 //                //课程浏览加+1
         addCourseBrowses(courseBroweseId,userId,courseBaseInfo.getId());
@@ -131,86 +119,13 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         coursePreviewDto.setTeachplans(teachplanTreeRedis);
         return coursePreviewDto;
 
-//        自定义线程池
-//        long statTime = System.currentTimeMillis();
-//        log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "当前开始时间:" + statTime + "ms");
-//        long startTime = System.currentTimeMillis();
-//        ExecutorService executorService = new ThreadPoolExecutor(
-//                48,96,60L,
-//                TimeUnit.SECONDS,new LinkedBlockingQueue<Runnable>(150),
-//                new ThreadPoolExecutor.CallerRunsPolicy()
-//        );
-//        try {
-//            // 通过 CompletableFuture 异步获取用户信息
-//            CompletableFuture<UserDto> userDtoFuture = CompletableFuture.supplyAsync(() -> {
-//                String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-//                UserDto userDto = userClient.GobalGetLoginUser(username);
-//                ThrowUtils.throwIf(userDto == null, ErrorCode.NOT_LOGIN_ERROR);
-//                return userDto;
-//            }, executorService);
-//
-//            // 通过 CompletableFuture 异步获取课程基本信息
-//            CompletableFuture<CourseBaseInfoDto> courseBaseInfoFuture = CompletableFuture.supplyAsync(() -> {
-//                CourseBaseInfoDto courseBaseInfo = courseBaseInfoService.getCourseBaseInfo(courseId);
-//                ThrowUtils.throwIf(courseBaseInfo == null, ErrorCode.NOT_FOUND_ERROR);
-//                return courseBaseInfo;
-//            }, executorService);
-//
-//            // 使用 thenCombine 等待两个异步操作完成后再继续执行
-//            return userDtoFuture.thenCombine(courseBaseInfoFuture, (userDto, courseBaseInfo) -> {
-//                // 判断是否收费且用户是否为会员
-//                String charge = courseBaseInfo.getCharge();
-//                Long userId = userDto.getId();
-//                ThrowUtils.throwIf(userDto.getMember() == null, ErrorCode.OPERATION_ERROR);
-//                if ("201001".equals(charge) && "605003".equals(userDto.getMember())) {
-//                    throw new BusinessException(ErrorCode.IS_NOT_MEMBER);
-//                }
-//
-//                // 插入或更新课程学习记录
-//                CourseLearnRecord courseLearnRecord = new CourseLearnRecord();
-//                courseLearnRecord.setCourseName(courseBaseInfo.getName());
-//                courseLearnRecord.setUserId(userDto.getId());
-//                courseLearnRecord.setCourseId(courseId);
-//                courseLearnRecord.setUserName(userDto.getUserName());
-//
-//                QueryWrapper<CourseLearnRecord> queryWrapper = new QueryWrapper<>();
-//                queryWrapper.eq("course_id", courseId);
-//                queryWrapper.eq("user_id", userDto.getId());
-//                String courseBroweseId = CourseConstant.COURSE_BROWSES + userId + courseBaseInfo.getId();
-//                //课程浏览加+1
-//                addCourseBrowses(courseBroweseId,userId,courseBaseInfo.getId());
-//
-//                // 获取课程计划信息
-//                List<TeachplanListDto> teachplanTreeRedis = courseBaseInfoService.findTeachplanTreeRedis(courseId);
-//
-//                // 返回课程预览数据
-//                CoursePreviewDto coursePreviewDto = new CoursePreviewDto();
-//                coursePreviewDto.setCourseBase(courseBaseInfo);
-//                coursePreviewDto.setTeachplans(teachplanTreeRedis);
-//                return coursePreviewDto;
-//            }).exceptionally(ex -> {
-//                // 异常处理
-//                throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-//            }).join(); // 等待完成并返回结果
-//        } finally {
-//            // 关闭线程池
-//            executorService.shutdown();
-//        }
 
     }
 
-//    private List<TeachplanListDto> findTeachplanTreeRedis(Long courseId) {
-//        String caffeineCourseMarketKey = REDIS_COURSE_TEACHPLAN + courseId;
-//        getFromCaffeineOrRedis(caffeineCourseMarketKey);
-//        return null;
-//    }
+
 
     private void addCourseBrowses(String courseBroweseId,Long userId,Long courseId) {
-//        long statTime = System.currentTimeMillis();
-//        log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "当前开始时间:" + statTime + "ms");
-//        long startTime = System.currentTimeMillis();
-//        RLock lock = redissonClient.getLock(CourseConstant.COURSE_LOCK + userId);
-//        Boolean isTryLock = false;
+
         try {
             Boolean member = redisTemplate.opsForSet().isMember(courseBroweseId, userId.toString());
             if(BooleanUtils.isFalse(member)){
@@ -225,12 +140,6 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
             }
         }catch (Exception e){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-//        }finally {
-//            lock.unlock();
-////            long endTime = System.currentTimeMillis();
-////            log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "当前结束时间:" + endTime + "ms");
-////            log.info("当前线程ID：" + Thread.currentThread().getId() + "," + "当前线程名：" + Thread.currentThread().getName() + "花费时间" + (endTime - statTime)  + "ms");
-////            System.out.println("当前线程执行完毕id" + Thread.currentThread().getId() + "当前线程执行完毕名" + Thread.currentThread().getName()  + (endTime - startTime) + "ms");
         }
     }
 
@@ -248,10 +157,10 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         if("202003".equals(auditStatus)){
             throw new BusinessException(ErrorCode.COURSE_STATUS_AUDIT_ERROR);
         }
-        //本机构只允许提交本机构的课程
-//        if(!courseBase.getManagerId().equals(userDto.getId())){
-//            throw new BusinessException(ErrorCode.COURSE_COMMIT_NOT_ERROR);
-//        }
+
+        if(!courseBase.getManagerId().equals(userDtoForRedisOrLock.getId())){
+            throw new BusinessException(ErrorCode.COURSE_COMMIT_NOT_ERROR);
+        }
 
         //课程图片是否填写
         if(StringUtils.isEmpty(courseBase.getPic())){
@@ -309,9 +218,9 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         CoursePublishPre coursePublishPre = coursePublishPreMapper.selectById(courseId);
         ThrowUtils.throwIf(coursePublishPre == null, ErrorCode.COURSE_AUDIT_IS_NOT_ERROR);
         //本机构只允许提交本机构的课程
-//        if(!coursePublishPre.getManagerId().equals(userDto.getId())){
-//            throw new BusinessException(ErrorCode.COURSE_COMMIT_NOT_ERROR);
-//        }
+        if(!coursePublishPre.getManagerId().equals(userDtoForRedisOrLock.getId())){
+            throw new BusinessException(ErrorCode.COURSE_COMMIT_NOT_ERROR);
+        }
 
 
         //课程审核状态
@@ -369,19 +278,7 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
 
     }
 
-//    /**
-//     * @description 保存消息表记录，稍后实现
-//     * @param courseId  课程id
-//     * @return void
-//
-//     */
-//    private void saveCoursePublishMessage(Long courseId){
-//        MqMessage mqMessage = mqMessageService.addMessage("course_publish", String.valueOf(courseId), null, null);
-//        if(mqMessage == null){
-//            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-//        }
-//
-//    }
+
 
     @Override
     public CoursePublish getCoursePublish(Long courseId){
