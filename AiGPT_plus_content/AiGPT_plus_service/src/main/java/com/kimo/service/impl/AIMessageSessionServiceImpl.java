@@ -6,18 +6,19 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionQueryRequest;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionUpdateRequest;
-import com.kimo.model.dto.user.Point;
-import com.kimo.model.dto.user.UserDto;
+
 import com.kimo.model.entity.AIMessageSession;
 import com.kimo.model.entity.AIRole;
 import com.kimo.service.AIMessageSessionService;

@@ -2,10 +2,11 @@ package com.kimo.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kimo.api.dto.UserDto;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionQueryRequest;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionUpdateRequest;
 import com.kimo.model.dto.aiRole.AIRoleUpdateRequest;
-import com.kimo.model.dto.user.UserDto;
+
 import com.kimo.model.entity.AIMessageSession;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -16,7 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public interface AIMessageSessionService extends IService<AIMessageSession> {
 
 
-    UserDto getUserDtoForRedisOrLock(HttpServletRequest request,String type);
+    UserDto getUserDtoForRedisOrLock(HttpServletRequest request, String type);
 
     boolean deleteAIMessageSession(long id, HttpServletRequest request);
 

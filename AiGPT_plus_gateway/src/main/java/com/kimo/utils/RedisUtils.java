@@ -122,7 +122,7 @@ public class RedisUtils {
     public void storeTokenInRedis(String token, String userEmail) {
         // 将 token 存入 Redis，key 为用户邮箱，value 为 token
         String key = RedisConstant.GATEWAY + userEmail;
-        redisTemplate.opsForValue().set(key, token, Duration.ofMinutes(3));  // 设置过期时间为 1 小时
+        redisTemplate.opsForValue().set(key, "你好", Duration.ofMinutes(3));
     }
 
 

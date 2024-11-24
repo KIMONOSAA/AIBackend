@@ -1,2 +1,4 @@
 # spring boot starter
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.kimo.config.CommonConfig
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.kimo.config.CommonConfig,\
+  com.kimo.config.MvcConfig

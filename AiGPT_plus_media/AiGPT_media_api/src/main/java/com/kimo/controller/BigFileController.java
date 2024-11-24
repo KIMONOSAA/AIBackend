@@ -3,7 +3,7 @@ package com.kimo.controller;
 
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.kimo.annotation.PermissionMethod;
+
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ResultUtils;
 import com.kimo.constant.MinioConstant;
@@ -44,11 +44,11 @@ public class BigFileController {
      * @throws Exception
      */
     @PostMapping("/upload/checkfile")
-    @PermissionMethod(permission = "media_manager_course_read")
     public BaseResponse<Boolean> checkfile(
-            @RequestParam("fileMd5") String fileMd5
+            @RequestParam("fileMd5") String fileMd5,
+            HttpServletRequest request
     ) throws Exception {
-        BaseResponse<Boolean> booleanRestResponse = mediaFileService.checkFile(fileMd5);
+        BaseResponse<Boolean> booleanRestResponse = mediaFileService.checkFile(fileMd5,request);
         return booleanRestResponse;
     }
 
@@ -59,10 +59,11 @@ public class BigFileController {
      *
      */
     @PostMapping("/upload/checkchunk")
-    @PermissionMethod(permission = "media_manager_course_read")
     public BaseResponse<Boolean> checkchunk(@RequestParam("fileMd5") String fileMd5,
-                                            @RequestParam("chunk") int chunk) throws Exception {
-        BaseResponse<Boolean> booleanRestResponse = mediaFileService.checkChunk(fileMd5, chunk);
+                                            @RequestParam("chunk") int chunk,
+                                            HttpServletRequest request
+                                            ) throws Exception {
+        BaseResponse<Boolean> booleanRestResponse = mediaFileService.checkChunk(fileMd5, chunk,request);
         return booleanRestResponse;
     }
 
@@ -73,12 +74,12 @@ public class BigFileController {
      *
      */
     @PostMapping("/upload/uploadchunk")
-//    @PermissionMethod(permission = "media_manager_course_update")
     public BaseResponse uploadchunk(@RequestParam("file") MultipartFile file,
                                     @RequestParam("fileMd5") String fileMd5,
-                                    @RequestParam("chunk") int chunk) throws Exception {
+                                    @RequestParam("chunk") int chunk,
+                                    HttpServletRequest request) throws Exception {
 
-        return mediaFileService.uploadChunk(fileMd5, chunk, file.getInputStream());
+        return mediaFileService.uploadChunk(fileMd5, chunk, file.getInputStream(),request);
     }
 
     /**
@@ -87,7 +88,6 @@ public class BigFileController {
      *
      */
     @PostMapping("/upload/mergechunks")
-    @PermissionMethod(permission = "media_manager_course_add")
     public BaseResponse mergechunks(@RequestParam("fileMd5") String fileMd5,
                                     @RequestParam("fileName") String fileName,
                                     @RequestParam("chunkTotal") int chunkTotal,HttpServletRequest request) throws Exception {
@@ -108,7 +108,6 @@ public class BigFileController {
      * @return
      */
     @PostMapping("/list/media/data")
-    @PermissionMethod(permission = "media_manager_course_add")
     public BaseResponse<Page<MediaFiles>> listAiMasterDataByPage(@RequestBody BinFIleListDto binFIleListDto, HttpServletRequest request) {
         long current = binFIleListDto.getCurrent();
         long size = binFIleListDto.getPageSize();

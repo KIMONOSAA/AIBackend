@@ -19,6 +19,17 @@
     </properties>
     <dependencies>
         <dependency>
+            <groupId>com.kimo</groupId>
+            <artifactId>gateway_Interceptor_sdk</artifactId>
+            <version>0.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kimo</groupId>
+            <artifactId>xueban-api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>com.xuxueli</groupId>
             <artifactId>xxl-job-core</artifactId>
         </dependency>

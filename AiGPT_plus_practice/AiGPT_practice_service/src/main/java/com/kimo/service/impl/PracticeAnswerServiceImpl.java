@@ -9,16 +9,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kimo.amqp.AccuracyChartProducer;
 import com.kimo.amqp.PracticeChartProducer;
+import com.kimo.api.client.ChartClient;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.ChartClient;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.AccuracyMapper;
 import com.kimo.mapper.PracticeAnswerMapper;
 import com.kimo.mapper.PracticeRecordMapper;
 import com.kimo.mapper.QuestionMapper;
+
 import com.kimo.model.dto.*;
 import com.kimo.model.po.*;
 import com.kimo.service.PracticeAnswerService;

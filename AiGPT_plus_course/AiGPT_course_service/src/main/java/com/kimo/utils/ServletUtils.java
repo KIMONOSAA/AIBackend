@@ -2,15 +2,21 @@ package com.kimo.utils;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kimo.api.client.PermissionsClient;
+import com.kimo.api.dto.Permissions;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.exception.BusinessException;
-import com.kimo.model.UserDto;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
 
 import static com.kimo.constant.CaffeineConstant.CAFFEINE_USER;
 import static com.kimo.constant.SecurityConstants.LOGIN_TYPE;
@@ -37,6 +43,9 @@ public class ServletUtils
 
     @Autowired
     private RedissonClient redissonClient;
+
+    @Autowired
+    private PermissionsClient permissionsClient;
 
 
     public UserDto getHeaderRedisForUser(HttpServletRequest request, String name)
@@ -96,6 +105,26 @@ public class ServletUtils
         }
     }
 
+    public String getRoleForPermission(UserDto userDtoForRedisOrLock) {
+        Long roleId = userDtoForRedisOrLock.getRoleId();
+        Permissions userPermissions = permissionsClient.getUserPermissions(String.valueOf(roleId));
+        String code = userPermissions.getCode();
+        return code;
+    }
 
+    public void ensuperAdminOrAdmin(String code,String expected) {
+        ArrayList<String> permissionList = new ArrayList<>();
+        try {
+            permissionList = objectMapper.readValue(code,new TypeReference<ArrayList<String>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,e.getMessage());
+        }
+        boolean admin = permissionList.contains(expected);
+        boolean superAdmin = permissionList.contains("114514");
+        if(!admin && !superAdmin) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR,"不是管理员或超级管理员");
+        }
+    }
 
 }

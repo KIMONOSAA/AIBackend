@@ -1,2 +1,5 @@
 # spring boot starter
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.kimo.config.CloudSecurityAutoConfigure
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.kimo.config.RedisAutoConfiguration,\
+  com.kimo.config.RedisOrGatewayUtils,\
+  com.kimo.config.ServerProtectInterceptor

@@ -1,7 +1,8 @@
 package com.kimo.controller;
 
 
-import com.kimo.ucenter.model.dto.UserDto;
+
+import com.kimo.api.dto.UserDto;
 import com.kimo.ucenter.model.po.Token;
 import com.kimo.ucenter.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;

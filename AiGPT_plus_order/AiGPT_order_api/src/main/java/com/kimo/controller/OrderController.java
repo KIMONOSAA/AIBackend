@@ -7,17 +7,18 @@ import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.kimo.api.client.UserClient;
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ErrorCode;
 import com.kimo.common.ResultUtils;
 import com.kimo.config.AlipayConfig;
-import com.kimo.constant.SecurityConstants;
+
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.model.dto.AddOrderDto;
 import com.kimo.model.dto.PayRecordDto;
 import com.kimo.model.dto.PayStatusDto;
-import com.kimo.model.dto.UserDto;
+
 import com.kimo.model.po.OrdersRecord;
 import com.kimo.service.OrdersService;
 import com.kimo.utils.ServletUtils;

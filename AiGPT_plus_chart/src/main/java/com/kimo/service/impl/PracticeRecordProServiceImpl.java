@@ -5,16 +5,18 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.common.PageRequest;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.PracticeRecordProMapper;
 import com.kimo.model.dto.chart.PracticeRecordRequest;
-import com.kimo.model.dto.chart.UserDto;
+
 import com.kimo.model.dto.po.Chart;
 import com.kimo.model.dto.po.PracticeRecordPro;
 import com.kimo.service.PracticeRecordProService;

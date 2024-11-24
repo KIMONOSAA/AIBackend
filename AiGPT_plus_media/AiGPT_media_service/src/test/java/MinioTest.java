@@ -130,7 +130,7 @@ public class MinioTest {
     //获取文件的md5
     @Test
     public void getMd5() {
-        try (FileInputStream fileInputStream = new FileInputStream("D:\\web\\Heima\\bigfile_test\\test2.mp4")) {
+        try (FileInputStream fileInputStream = new FileInputStream("D:\\web\\Heima\\bigfile_test\\c0540921e4dcd9238de4b26ed402e271.mp4")) {
             String fileMd5 = DigestUtils.md5Hex(fileInputStream);
             System.out.println(fileMd5);
         } catch (Exception e) {

@@ -23,6 +23,26 @@
             <result property="isEnable" column="is_enable" jdbcType="TINYINT"/>
     </resultMap>
 
+    <resultMap id="UserListDtoNodeMap" type="com.kimo.ucenter.model.dto.UserListDto">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="userAccount" column="user_account" jdbcType="VARCHAR"/>
+        <result property="member" column="member" jdbcType="VARCHAR"/>
+        <result property="qualification" column="qualification" jdbcType="VARCHAR"/>
+        <result property="grade" column="grade" jdbcType="VARCHAR"/>
+        <result property="roleId" column="role_id" jdbcType="BIGINT"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="roleId" column="role_id" jdbcType="VARCHAR"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="userRole" column="user_role" jdbcType="VARCHAR" typeHandler="org.apache.ibatis.type.EnumTypeHandler" />
+        <result property="isPoint" column="is_point" jdbcType="TINYINT"/>
+        <result property="isEnable" column="is_enable" jdbcType="TINYINT"/>
+        <association property="roles" javaType="com.kimo.ucenter.model.po.Roles">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id"/>
+            <result property="rolesName" column="roles_name"/>
+        </association>
+    </resultMap>
+
     <sql id="Base_Column_List">
         id,user_account,user_password,
         email,user_name,user_avatar,member,qualification,grade,
@@ -40,4 +60,25 @@
         INSERT INTO user (id, user_avatar,user_password,email,user_account)
         VALUES (#{id},#{userAvatar},#{userPassword},#{email},#{userAccount})
     </insert>
+
+
+    <select id="getUserForRolesNodeById" resultMap="UserListDtoNodeMap">
+        select
+            u.id,
+            u.user_account,
+            u.email,
+            u.user_name,
+            u.member,
+            u.role_id,
+            u.qualification,
+            u.grade,
+            u.is_enable,
+            u.is_point,
+            r.id,
+            r.roles_name
+        from user u
+                 LEFT JOIN roles r ON u.id = r.user_id
+        order by u.id
+        limit #{pageSize} offset #{offset}
+    </select>
 </mapper>

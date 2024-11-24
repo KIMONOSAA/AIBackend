@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
 @ConfigurationProperties(prefix = "spring.gateway.cloud")
-public class CloudSecurityProperties { 
+public class CloudProperties {
  
     /** 
      * 是否只能通过网关获取资源 

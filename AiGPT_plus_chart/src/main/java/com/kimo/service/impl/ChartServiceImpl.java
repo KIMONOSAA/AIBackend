@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.kimo.amqp.ChartProducer;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.config.WebSocketHandler;
 import com.kimo.constant.ChartConstant;
@@ -15,13 +17,16 @@ import com.kimo.constant.SqlConstants;
 import com.kimo.domain.*;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.listener.CouZiEventSourceListener;
 import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.mapper.ChartMapper;
 
-import com.kimo.model.dto.chart.*;
+
+import com.kimo.model.dto.chart.ChartEditRequest;
+import com.kimo.model.dto.chart.ChartQueryRequest;
+import com.kimo.model.dto.chart.GenChartyByAIRequest;
 import com.kimo.model.dto.po.AIMasterData;
 import com.kimo.model.dto.po.AIMessageSession;
 import com.kimo.model.dto.po.Chart;
@@ -37,8 +42,7 @@ import com.kimo.utils.SqlUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.logging.HttpLoggingInterceptor;
-import okhttp3.sse.EventSource;
+
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -47,16 +51,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.sql.rowset.serial.SerialBlob;
+
 import java.io.IOException;
-import java.sql.Blob;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import static com.kimo.constans.CouZiConstant.*;
 import static com.kimo.constant.Constants.PointNumber;
-import static com.kimo.constants.CouZiConstant.BEARER;
+
 import static com.kimo.utils.ExcelUtils.excelToCsv;
 import static com.kimo.utils.YouBanUtils.*;
 
@@ -479,7 +483,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         }
 
         // 如果会话已存在，则返回 false
-        return false;
+        return true;
     }
 
 
@@ -510,6 +514,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
         // 更新 AI 数据体和时间
         aiMasterData.setAiBody(aiData);
+        aiMasterData.setUserBody(data);
         aiMasterData.setUpdateTime(LocalDateTime.now()); // 或者 LocalDateTime.now(ZoneId.of("UTC"))
 
         // 执行更新操作

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="generator.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="generator.domain.User">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userAccount" column="user_account" jdbcType="VARCHAR"/>
+            <result property="userPassword" column="user_password" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+            <result property="userRole" column="user_role" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
+            <result property="isEnable" column="is_enable" jdbcType="TINYINT"/>
+            <result property="isPoint" column="is_point" jdbcType="TINYINT"/>
+            <result property="member" column="member" jdbcType="VARCHAR"/>
+            <result property="roleId" column="role_id" jdbcType="BIGINT"/>
+            <result property="qualification" column="qualification" jdbcType="VARCHAR"/>
+            <result property="grade" column="grade" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_account,user_password,
+        email,user_name,user_role,
+        create_time,update_time,is_delete,
+        is_enable,is_point,member,
+        role_id,qualification,grade,
+        user_avatar
+    </sql>
+</mapper>

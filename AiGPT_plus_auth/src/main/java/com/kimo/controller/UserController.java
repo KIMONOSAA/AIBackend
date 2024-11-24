@@ -2,21 +2,25 @@ package com.kimo.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kimo.annotation.PermissionMethod;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.*;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.RedisConstant;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.ucenter.mapper.UserMapper;
-import com.kimo.ucenter.model.vo.AuthentianResponse;
 import com.kimo.ucenter.model.dto.*;
-import com.kimo.ucenter.model.dto.UserDto;
+import com.kimo.ucenter.model.vo.AuthentianResponse;
+
+
 import com.kimo.ucenter.service.PointService;
 import com.kimo.ucenter.service.UserService;
 import com.kimo.ucenter.model.po.User;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import com.kimo.utils.RedisVerificationUtil;
+import com.kimo.utils.ServletUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +65,9 @@ public class UserController {
 
     @Autowired
     private PointService pointService;
+
+    @Autowired
+    private ServletUtils servletUtils;
 
 
 //    @PostMapping("/findemail")
@@ -130,7 +137,7 @@ public class UserController {
      * @return AuthentianResponse
      */
     @PostMapping("/authentication")
-    public BaseResponse<AuthentianResponse> getAuthentication(@RequestBody UserAuthenticationRequest request,HttpServletRequest httpServletRequest){
+    public BaseResponse<AuthentianResponse> getAuthentication(@RequestBody UserAuthenticationRequest request, HttpServletRequest httpServletRequest){
         Optional<AuthentianResponse> optionalResponse = userService.authentication(request,httpServletRequest);
         return optionalResponse.map(ResultUtils::success).orElseGet(() -> ResultUtils.error(ErrorCode.OPERATION_ERROR, "验证失败"));
     }
@@ -204,7 +211,6 @@ public class UserController {
 
 
     @PostMapping("/add")
-    @PermissionMethod(permission = "user_add")
     /**
      * @Author kimo
      * @Description  创建用户只允许管理员
@@ -216,22 +222,13 @@ public class UserController {
      * @return com.kimo.common.BaseResponse<java.lang.Long>
      **/
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest, HttpServletRequest request) {
-        if (userAddRequest == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        User user = new User();
-        BeanUtils.copyProperties(userAddRequest, user);
-        String encode = passwordEncoder.encode(userAddRequest.getPassword());
-        user.setUserPassword(encode);
-        boolean result = userService.save(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return ResultUtils.success(user.getId());
+        Long userId = userService.createUser(userAddRequest,request);
+        return ResultUtils.success(userId);
     }
 
 
 
     @PostMapping("/delete")
-    @PermissionMethod(permission = "user_delete")
     /**
      * @Author kimo
      * @Description  删除用户只允许管理员
@@ -243,16 +240,12 @@ public class UserController {
      * @return com.kimo.common.BaseResponse<java.lang.Boolean>
      **/
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
-        if (deleteRequest == null || deleteRequest.getId() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        boolean b = userService.removeById(deleteRequest.getId());
-        return ResultUtils.success(b);
+        Boolean IsS = userService.removeUser(deleteRequest,request);
+        return ResultUtils.success(IsS);
     }
 
 
     @PostMapping("/update")
-    @PermissionMethod(permission = "user_update")
     /**
      * @Author kimo
      * @Description  修改用户只允许管理员
@@ -265,20 +258,12 @@ public class UserController {
      **/
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
                                             HttpServletRequest request) {
-        if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        User user1 = userMapper.selectById(userUpdateRequest.getId());
-        ThrowUtils.throwIf(user1 == null,ErrorCode.USER_IS_NOT);
-        BeanUtils.copyProperties(userUpdateRequest, user1);
-        boolean result = userService.updateById(user1);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        Boolean IsS = userService.updateUser(userUpdateRequest,request);
         return ResultUtils.success(true);
     }
 
 
     @GetMapping("/get")
-    @PermissionMethod(permission = "user_read")
     /**
      * @Author kimo
      * @Description  管理员、获取用户
@@ -290,17 +275,12 @@ public class UserController {
      * @return com.kimo.common.BaseResponse<com.kimo.ucenter.model.po.User>
      **/
     public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
-        if (id <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        User user = userService.getById(id);
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        User user = userService.getUserById(id,request);
         return ResultUtils.success(user);
     }
 
 
     @PostMapping("/list/page")
-    @PermissionMethod(permission = "user_read")
     /**
      * @Author kimo
      * @Description  分页获取用户只允许管理员
@@ -311,12 +291,13 @@ public class UserController {
      * @return
      * @return com.kimo.common.BaseResponse<com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.kimo.ucenter.model.po.User>>
      **/
+
     public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
                                                    HttpServletRequest request) {
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
         Page<User> userPage = userService.page(new Page<>(current, size),
-                userService.getQueryWrapper(userQueryRequest));
+                userService.getQueryWrapper(userQueryRequest,request));
         return ResultUtils.success(userPage);
     }
 
@@ -355,6 +336,20 @@ public class UserController {
      **/
     public Boolean updatePoint(@RequestParam Long userId,@RequestParam Long point){
         return pointService.updatePoint(userId,point);
+    }
+
+    /**
+     * @Author: Mr.kimo
+     * @Date: 19:47
+     * @return:
+     * @Param:
+     * @Description: 分页获取用户以及角色
+     */
+    @PostMapping("/list/user/roles/page")
+    public BaseResponse<List<UserListDto>> listUserForRolesByPage(@RequestBody PageRequest pageRequest,
+                                                           HttpServletRequest request) {
+        List<UserListDto> userPage = userService.listUserForRolesByPage(pageRequest,request);
+        return ResultUtils.success(userPage);
     }
 
 

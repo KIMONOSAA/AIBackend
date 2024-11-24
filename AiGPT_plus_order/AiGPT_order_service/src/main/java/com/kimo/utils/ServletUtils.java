@@ -3,13 +3,15 @@ package com.kimo.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.exception.BusinessException;
 
-import com.kimo.model.dto.UserDto;
+
 import jakarta.servlet.http.HttpServletRequest;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,7 @@ public class ServletUtils
     private JwtService jwtService;
 
     @Autowired
+    @Qualifier("redisTemplate")
     private RedisTemplate<String,String> redisTemplate;
 
     @Autowired

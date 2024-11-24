@@ -4,17 +4,22 @@ package com.kimo.service.impl;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.CourseConstant;
 import com.kimo.constant.RedisConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.*;
 
-import com.kimo.model.dto.*;
 
+import com.kimo.model.dto.CourseBaseInfoDto;
+import com.kimo.model.dto.CourseLearnRecordDto;
+import com.kimo.model.dto.CoursePreviewDto;
+import com.kimo.model.dto.TeachplanListDto;
 import com.kimo.model.po.*;
 import com.kimo.service.CourseBaseService;
 import com.kimo.service.CoursePublishService;
@@ -90,10 +95,14 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
 
 
     @Override
-    public CoursePreviewDto getCoursePreviewInfo(Long courseId,HttpServletRequest request,CourseLearnRecordDto courseLearnRecordDto) {
+    public CoursePreviewDto getCoursePreviewInfo(Long courseId, HttpServletRequest request, CourseLearnRecordDto courseLearnRecordDto) {
         //        //获取用户信息
 
         UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
+
+        courseBaseService.ensuperAdminOrAdmin(code,"900006");
+
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
 
@@ -103,7 +112,7 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         //判断是否收费是否会员
         String charge = courseBaseInfo.getCharge();
         ThrowUtils.throwIf(userDtoForRedisOrLock.getMember() == null,ErrorCode.OPERATION_ERROR);
-        if(charge.equals("201001") && userDtoForRedisOrLock.getMember().equals("605003")){
+        if(charge.equals("201001") && "605003".equals(userDtoForRedisOrLock.getMember())) {
             throw new BusinessException(ErrorCode.IS_NOT_MEMBER);
         }
 
@@ -147,6 +156,10 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     @Transactional
     public void commitAudit(Long courseId, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
+
+        courseBaseService.ensuperAdminOrAdmin(code,"900006");
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
         //约束校验
@@ -210,6 +223,11 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     @Override
     public void publish(HttpServletRequest request, Long courseId) {
         UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
+
+        courseBaseService.ensuperAdminOrAdmin(code,"900001");
+
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         String caffeineCourseIdKey = CAFFEINE_COURSE + courseId;
         String caffeineCourseMarketKey = CAFFEINE_COURSE_MARKET + courseId;

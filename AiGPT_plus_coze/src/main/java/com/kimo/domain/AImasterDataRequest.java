@@ -8,4 +8,6 @@ public class AImasterDataRequest
     private Long masterId;
 
     private Long sessionId;
+
+    private String message;
 }

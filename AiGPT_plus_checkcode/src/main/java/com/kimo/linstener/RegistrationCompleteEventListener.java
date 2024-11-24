@@ -9,6 +9,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -28,6 +29,7 @@ public class RegistrationCompleteEventListener implements ApplicationListener<Re
 
 
     @Autowired
+    @Qualifier("redisTemplate")
     private RedisTemplate<String,String> redisTemplate;
 
 //    @Autowired

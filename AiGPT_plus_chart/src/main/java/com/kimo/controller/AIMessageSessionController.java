@@ -2,6 +2,7 @@ package com.kimo.controller;
 
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.BaseResponse;
 import com.kimo.common.DeleteRequest;
 import com.kimo.common.ErrorCode;
@@ -13,7 +14,7 @@ import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.model.dto.chart.AIMessageSessionAddRequest;
 import com.kimo.model.dto.chart.AIMessageSessionQueryRequest;
 import com.kimo.model.dto.chart.AIMessageSessionUpdateRequest;
-import com.kimo.model.dto.chart.UserDto;
+
 import com.kimo.model.dto.po.AIMessageSession;
 import com.kimo.service.AIMessageSessionService;
 import com.kimo.utils.ServletUtils;

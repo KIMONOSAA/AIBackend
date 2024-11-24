@@ -1,6 +1,8 @@
 package com.kimo.model.po;
 
-import com.kimo.model.dto.UserDto;
+
+
+import com.kimo.api.dto.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

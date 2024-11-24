@@ -79,10 +79,10 @@ public class AccuracyChartConsumer {
                     accuracyChart = createNewAccuracyChart(accuracyId);
                 }
 
-                if ("succeed".equals(accuracyChart.getStatus())) {
-                    log.info("消息体参数 【重复消息】: {}", accuracyChart.getId());
-                    return;
-                }
+//                if ("succeed".equals(accuracyChart.getStatus())) {
+//                    log.info("消息体参数 【重复消息】: {}", accuracyChart.getId());
+//                    return;
+//                }
 
                 accuracyChart.setStatus("running");
                 accuracyChart.setUpdateTime(LocalDateTime.now());

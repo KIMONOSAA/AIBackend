@@ -4,23 +4,27 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kimo.api.client.CheckCodeClient;
+import com.kimo.api.dto.UserDto;
+import com.kimo.common.DeleteRequest;
+import com.kimo.common.PageRequest;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.ThrowUtils;
 import com.kimo.ucenter.mapper.PointMapper;
 import com.kimo.ucenter.mapper.UserEnbleMapper;
 import com.kimo.ucenter.mapper.UserMemberMapper;
+import com.kimo.ucenter.model.dto.*;
 import com.kimo.ucenter.model.po.*;
-import com.kimo.ucenter.service.PermissionsService;
-import com.kimo.ucenter.service.RolesService;
+
 import com.kimo.utils.*;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.UserConstant;
 import com.kimo.exception.BusinessException;
-import com.kimo.ucenter.feignclient.CheckCodeClient;
+
 import com.kimo.ucenter.mapper.UserMapper;
-import com.kimo.ucenter.model.dto.*;
+
 import com.kimo.ucenter.model.vo.AuthentianResponse;
 import com.kimo.ucenter.model.vo.UserVO;
 import com.kimo.ucenter.service.TokenService;
@@ -40,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -92,12 +97,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserMemberMapper userMemberMapper;
 
     @Autowired
-    private RolesService rolesService;
-
-    @Autowired
-    private PermissionsService permissionsService;
-
-    @Autowired
     private ServletUtils  servletUtils;
 
     @Autowired
@@ -130,11 +129,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 用户的更新点
         updateUserPoints(user.getId().toString(), 1000L);
 
-        // 创建并保存用户角色
-        Roles role = createAndSaveRole(user.getId(), "VIP");
-
-        // 创建和保存角色的权限
-        createAndSavePermission(role.getId(), "user_vip_all", "会员专享");
+//        // 创建并保存用户角色
+//        Roles role = createAndSaveRole(user.getId(), "VIP");
+//
+//        // 创建和保存角色的权限
+//        createAndSavePermission(role.getId(), "user_vip_all", "会员专享");
 
         return true;
     }
@@ -212,43 +211,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return newPoint;  // 返回新创建的积分记录
     }
 
-    /**
-     * @Author: Mr.kimo
-     * @Date: 9:26
-     * @Param: userId - 用户的唯一标识
-     * @Param: roleName - 需要创建的角色名称
-     * @return: Roles - 返回创建并保存的角色对象
-     * @Description: 为指定用户创建新的角色信息。如果保存失败，则抛出系统错误异常。
-     */
-    private Roles createAndSaveRole(Long userId, String roleName) {
-        long roleId = IdWorkerUtils.getInstance().nextId();
-        Roles role = new Roles();
-        role.setId(roleId);
-        role.setUserId(userId);
-        role.setRolesName(roleName);
-        boolean save = rolesService.save(role);
-        ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR);
-        return role;
-    }
+//    /**
+//     * @Author: Mr.kimo
+//     * @Date: 9:26
+//     * @Param: userId - 用户的唯一标识
+//     * @Param: roleName - 需要创建的角色名称
+//     * @return: Roles - 返回创建并保存的角色对象
+//     * @Description: 为指定用户创建新的角色信息。如果保存失败，则抛出系统错误异常。
+//     */
+//    private Roles createAndSaveRole(Long userId, String roleName) {
+//        long roleId = IdWorkerUtils.getInstance().nextId();
+//        Roles role = new Roles();
+//        role.setId(roleId);
+//        role.setUserId(userId);
+//        role.setRolesName(roleName);
+//        boolean save = rolesService.save(role);
+//        ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR);
+//        return role;
+//    }
 
-    /**
-     * @Author: Mr.kimo
-     * @Date: 9:26
-     * @Param: roleId - 角色的唯一标识
-     * @Param: code - 权限代码
-     * @Param: permissionName - 权限名称
-     * @Description: 为指定角色创建新的权限信息。如果保存失败，则抛出系统错误异常。
-     */
-    private void createAndSavePermission(long roleId, String code, String permissionName) {
-        long permissionId = IdWorkerUtils.getInstance().nextId();
-        Permissions permissions = new Permissions();
-        permissions.setId(permissionId);
-        permissions.setRoleId(roleId);
-        permissions.setCode(code);
-        permissions.setPermissionName(permissionName);
-        boolean save = permissionsService.save(permissions);
-        ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR);
-    }
+//    /**
+//     * @Author: Mr.kimo
+//     * @Date: 9:26
+//     * @Param: roleId - 角色的唯一标识
+//     * @Param: code - 权限代码
+//     * @Param: permissionName - 权限名称
+//     * @Description: 为指定角色创建新的权限信息。如果保存失败，则抛出系统错误异常。
+//     */
+//    private void createAndSavePermission(long roleId, String code, String permissionName) {
+//        long permissionId = IdWorkerUtils.getInstance().nextId();
+//        Permissions permissions = new Permissions();
+//        permissions.setId(permissionId);
+//        permissions.setRoleId(roleId);
+//        permissions.setCode(code);
+//        permissions.setPermissionName(permissionName);
+//        boolean save = permissionsService.save(permissions);
+//        ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR);
+//    }
 
 
     @Override
@@ -335,12 +334,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @Param: [com.kimo.ucenter.model.dto.UserQueryRequest]
      * @Description: 分页列出所有用户信息（只允许管理员）
      */
-    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest,HttpServletRequest request) {
         // 检查请求参数是否为空
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
 
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"2000002");
         Long id = userQueryRequest.getId();
         String userName = userQueryRequest.getUserName();
         String userProfile = userQueryRequest.getUserProfile();
@@ -600,7 +603,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return "登出成功";
     }
 
-    private UserDto getUserFromCacheOrDb(HttpServletRequest request) {
+    @Override
+    public UserDto getUserFromCacheOrDb(HttpServletRequest request) {
         // 从 Redis 缓存中获取用户信息
         Object userFromCache = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
 
@@ -612,7 +616,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
 
             // 查询数据库中的用户
-            User userFromDb = userMapper.findByEmail(userEmail);
+            User userFromDb = userMapper.selectById(userEmail);
             if (userFromDb == null) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "没有这个用户");
             }
@@ -650,7 +654,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 设置签到标记
         Boolean result = redisTemplate.opsForValue().setBit(cacheKey, day - 1, true);
-
+        String s = redisTemplate.opsForValue().get("gateway:user:1854934298709209090");
+        log.info(s+"==================================");
         // 如果设置签到标记失败
         if (Boolean.FALSE.equals(result)) {
             // 设置过期时间，确保缓存不永久存在
@@ -737,6 +742,86 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userDto;
     }
 
+    @Override
+    public List<UserListDto> listUserForRolesByPage(PageRequest pageRequest, HttpServletRequest request) {
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"3000002");
+        int pageSize = pageRequest.getPageSize();
+        int current = pageRequest.getCurrent();
+        int offset = (current - 1) * pageSize;
+        return userMapper.getUserForRolesNodeById(pageSize, offset);
+    }
+
+    @Override
+    public Long createUser(UserAddRequest userAddRequest, HttpServletRequest request) {
+        if (userAddRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User user = new User();
+        BeanUtils.copyProperties(userAddRequest, user);
+        String encode = passwordEncoder.encode(userAddRequest.getPassword());
+        user.setUserPassword(encode);
+        user.setIsEnable(1);
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"3000001");
+        boolean result = this.save(user);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        return 1L;
+    }
+
+    @Override
+    public Boolean removeUser(DeleteRequest deleteRequest, HttpServletRequest request) {
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"3000004");
+        if (deleteRequest == null || deleteRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        return this.removeById(deleteRequest.getId());
+    }
+
+    @Override
+    public Boolean updateUser(UserUpdateRequest userUpdateRequest, HttpServletRequest request) {
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"3000003");
+        if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User user1 = userMapper.selectById(userUpdateRequest.getId());
+        ThrowUtils.throwIf(user1 == null,ErrorCode.USER_IS_NOT);
+        BeanUtils.copyProperties(userUpdateRequest, user1);
+        boolean result = this.updateById(user1);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return true;
+    }
+
+    @Override
+    public User getUserById(long id, HttpServletRequest request) {
+
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"3000002");
+        User user = this.getById(id);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        return user;
+    }
 
 
     public boolean isSignIn(String userNo, String date) {

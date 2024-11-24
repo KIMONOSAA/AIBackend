@@ -8,17 +8,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.kimo.api.client.PermissionsClient;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.Permissions;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.CourseBaseMapper;
 import com.kimo.mapper.CourseMarketMapper;
 import com.kimo.mapper.TeachplanMapper;
 import com.kimo.mapper.TeachplanMediaMapper;
+
 import com.kimo.model.dto.*;
 import com.kimo.model.po.CourseBase;
 import com.kimo.model.po.CourseMarket;
@@ -47,6 +52,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -102,6 +108,11 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
     // 初始化 ObjectMapper 为静态成员，避免多次实例化
     @Autowired
     private ObjectMapper objectMapper;
+
+
+    @Autowired
+    private PermissionsClient permissionsClient;
+
 
 
     @Override
@@ -169,6 +180,12 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      */
     public Wrapper<CourseBase> getQueryWrapperList(CoursePublishListDto coursePublishListDto, HttpServletRequest request) {
         QueryWrapper<CourseBase> queryWrapper = new QueryWrapper<>();
+        UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+//        String code = getRoleForPermission(userDtoForRedisOrLock);
+//
+//        ensuperAdminOrAdmin(code,"900001");
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_FOUND_ERROR);
 
         queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getTags()), CourseBase::getTags, coursePublishListDto.getTags());
 
@@ -259,8 +276,12 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      * @Param: [com.kimo.model.dto.AddCourseDto, jakarta.servlet.http.HttpServletRequest]
      * @Description: 创建课程
      */
-    public CourseBaseInfoDto createCourseBase( AddCourseDto addCourseDto,HttpServletRequest request) {
+    public CourseBaseInfoDto createCourseBase(AddCourseDto addCourseDto, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = getRoleForPermission(userDtoForRedisOrLock);
+
+        ensuperAdminOrAdmin(code,"900001");
 //        UserDto userDto = userClient.GobalGetLoginUser(username);
         //合法性校验
         ThrowUtils.throwIf(StringUtils.isBlank(addCourseDto.getName()), ErrorCode.COURSE_NAME_NOT_FOUND_ERROR);
@@ -291,6 +312,30 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         ThrowUtils.throwIf(i <= 0,ErrorCode.SAVE_MARKET_ERROR);
         //查询课程基本信息及营销信息并返回
         return getCourseBaseInfo(courseId);
+    }
+
+    @Override
+    public String getRoleForPermission(UserDto userDtoForRedisOrLock) {
+        Long roleId = userDtoForRedisOrLock.getRoleId();
+        Permissions userPermissions = permissionsClient.getUserPermissions(String.valueOf(roleId));
+        String code = userPermissions.getCode();
+        return code;
+    }
+
+    @Override
+    public void ensuperAdminOrAdmin(String code,String expected) {
+        ArrayList<String> permissionList = new ArrayList<>();
+        try {
+            permissionList = objectMapper.readValue(code,new TypeReference<ArrayList<String>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,e.getMessage());
+        }
+        boolean admin = permissionList.contains(expected);
+        boolean superAdmin = permissionList.contains("114514");
+        if(!admin && !superAdmin) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR,"不是管理员或超级管理员");
+        }
     }
 
 
@@ -465,8 +510,13 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      * @Param: [com.kimo.model.dto.EditCourseDto, jakarta.servlet.http.HttpServletRequest]
      * @Description: 修改课程信息
      */
-    public CourseBaseInfoDto updateCourseBase(EditCourseDto editCourseDto,HttpServletRequest request) {
+    public CourseBaseInfoDto updateCourseBase(EditCourseDto editCourseDto, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = getRoleForPermission(userDtoForRedisOrLock);
+
+        ensuperAdminOrAdmin(code,"900003");
+
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
         Long courseId = editCourseDto.getId();
@@ -552,6 +602,9 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      */
     public Boolean deletedTeachplanOrMedia(Long teachId,Long courseId, HttpServletRequest request) {
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        String code = getRoleForPermission(userDtoForRedisOrLock);
+
+        ensuperAdminOrAdmin(code,"900004");
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
@@ -631,7 +684,12 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
      * @Description: 删除课程
      */
     public Boolean deletedCourseBase(Long courseId, HttpServletRequest request) {
+
         UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = getRoleForPermission(userDtoForRedisOrLock);
+
+        ensuperAdminOrAdmin(code,"900004");
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
         CourseBase courseBase = courseBaseMapper.selectById(userId);

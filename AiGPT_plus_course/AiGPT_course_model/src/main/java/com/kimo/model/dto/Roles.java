@@ -9,32 +9,27 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * @author Mr.kimo
+ * 角色
+ * @TableName roles
  */
 @Data
-public class Permissions implements Serializable {
+public class Roles implements Serializable {
     /**
-     * 
+     * id
      */
-    private Integer id;
+    private Long id;
 
     /**
-     * 角色id
+     * 用户id
      */
-    private Long roleId;
+    private Long userId;
 
     /**
-     * 权限代码
+     * 角色名
      */
-    private String code;
-
-    /**
-     * 权限代码名
-     */
-    private String permissionName;
+    private String rolesName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
-
 
 }

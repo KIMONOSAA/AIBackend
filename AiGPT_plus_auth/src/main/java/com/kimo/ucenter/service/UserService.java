@@ -2,7 +2,10 @@ package com.kimo.ucenter.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kimo.api.dto.UserDto;
+import com.kimo.common.DeleteRequest;
 import com.kimo.common.PageRequest;
+
 import com.kimo.ucenter.model.dto.*;
 import com.kimo.ucenter.model.po.User;
 import com.kimo.ucenter.model.po.UserMember;
@@ -32,6 +35,9 @@ public interface UserService extends IService<User> {
      * @return
      */
     public boolean saveUserStatusSuccess(String memberId,String memberType,String userId);
+
+
+    public UserDto getUserFromCacheOrDb(HttpServletRequest request);
 
     /**
      * 获取当前登录用户
@@ -71,7 +77,7 @@ public interface UserService extends IService<User> {
      * @param userQueryRequest
      * @return
      */
-    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest,HttpServletRequest request);
 
     long registration(UserAddRequest request, MultipartFile file) throws IOException;
 
@@ -79,7 +85,7 @@ public interface UserService extends IService<User> {
 
     String saveUserForUpdateEnabled(String s, boolean isValid,String email);
 
-    Optional<AuthentianResponse> authentication(UserAuthenticationRequest request,HttpServletRequest httpServletRequest);
+    Optional<AuthentianResponse> authentication(UserAuthenticationRequest request, HttpServletRequest httpServletRequest);
 
     String userLogOut(HttpServletRequest request);
 
@@ -90,4 +96,13 @@ public interface UserService extends IService<User> {
 
     UserDto GobalGetLoginUser(String request);
 
+    List<UserListDto> listUserForRolesByPage(PageRequest pageRequest, HttpServletRequest request);
+
+    Long createUser(UserAddRequest userAddRequest, HttpServletRequest request);
+
+    Boolean removeUser(DeleteRequest deleteRequest, HttpServletRequest request);
+
+    Boolean updateUser(UserUpdateRequest userUpdateRequest, HttpServletRequest request);
+
+    User getUserById(long id, HttpServletRequest request);
 }

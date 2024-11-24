@@ -2,8 +2,7 @@ package com.kimo.controller;
 
 
 
-import cn.hutool.db.PageResult;
-import com.kimo.annotation.PermissionMethod;
+
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ResultUtils;
 import com.kimo.constant.MinioConstant;
@@ -46,7 +45,6 @@ public class MediaFilesController {
 //
 //    }
     @PostMapping( "/upload/coursefile")
-    @PermissionMethod(permission = "media_manager_course_add")
     public BaseResponse<UploadFileResultDto> upload(@RequestParam("filedata") MultipartFile filedata, @RequestParam("objectName") String objectName, HttpServletRequest request) throws IOException {
 
 

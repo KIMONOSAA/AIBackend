@@ -12,12 +12,14 @@ import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kimo.amqp.OrdersProducer;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.config.AlipayConfig;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.OrdersDetailMapper;
 import com.kimo.mapper.OrdersMapper;
 import com.kimo.mapper.OrdersRecordMapper;
@@ -26,7 +28,7 @@ import com.kimo.messagesdk.service.MqMessageService;
 import com.kimo.model.dto.AddOrderDto;
 import com.kimo.model.dto.PayRecordDto;
 import com.kimo.model.dto.PayStatusDto;
-import com.kimo.model.dto.UserDto;
+
 import com.kimo.model.po.Orders;
 import com.kimo.model.po.OrdersDetail;
 import com.kimo.model.po.OrdersRecord;

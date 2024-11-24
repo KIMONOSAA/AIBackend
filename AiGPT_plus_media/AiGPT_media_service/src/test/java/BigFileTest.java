@@ -19,11 +19,12 @@ public class BigFileTest {
 
     @Test
     public void testChunk() throws IOException {
-        File sourceFile = new File("D:\\web\\Heima\\bigfile_test\\test2.mp4");
+        File sourceFile = new File("D:\\web\\Heima\\bigfile_test\\test.mp4");
         //分块文件存储路径
         String chunkFilePath = "D:\\web\\Heima\\bigfile_test\\chunk\\";
         //分块文件大小
         int chunkSize = 1024 * 1024 * 5;
+        System.out.println(sourceFile.length());
         //分块文件个数
         int chunkNum = (int)Math.ceil(sourceFile.length() * 1.0 / chunkSize);
         //使用流从文件读数据，向分块文件中写数据
@@ -54,9 +55,9 @@ public class BigFileTest {
         //块文件目录
         File chunkFolder = new File("E:\\web\\Heima\\bigfile_test\\chunk");
         //源文件
-        File sourceFile = new File("E:\\web\\Heima\\bigfile_test\\nacos.mp4");
+        File sourceFile = new File("E:\\web\\Heima\\bigfile_test\\test10086.mp4");
         //合并后
-        File mergeFile = new File("E:\\web\\Heima\\bigfile_test\\nacos2.mp4");
+        File mergeFile = new File("E:\\web\\Heima\\bigfile_test\\test10086.mp4");
 
         //取出所以分块文件
         File[] files = chunkFolder.listFiles();

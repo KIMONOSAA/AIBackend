@@ -3,9 +3,11 @@ package com.kimo.service;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+
+import com.kimo.api.dto.UserDto;
 import com.kimo.model.dto.chart.AIMessageSessionQueryRequest;
 import com.kimo.model.dto.chart.AIMessageSessionUpdateRequest;
-import com.kimo.model.dto.chart.UserDto;
+
 import com.kimo.model.dto.po.AIMessageSession;
 import jakarta.servlet.http.HttpServletRequest;
 

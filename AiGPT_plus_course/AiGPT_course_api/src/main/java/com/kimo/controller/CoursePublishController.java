@@ -1,6 +1,6 @@
 package com.kimo.controller;
 
-import com.kimo.annotation.PermissionMethod;
+
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ResultUtils;
 import com.kimo.model.dto.CourseLearnRecordDto;
@@ -28,7 +28,6 @@ public class CoursePublishController {
       * @return 返回课程预览信息的视图模型
       */
      @GetMapping("/coursepreview/{courseId}")
-     @PermissionMethod(permission = "course_manager_course_all")
      public BaseResponse<CoursePreviewDto> preview(@PathVariable("courseId") Long courseId, CourseLearnRecordDto courseLearnRecordDto, HttpServletRequest request){
 
           //获取课程预览信息
@@ -46,7 +45,6 @@ public class CoursePublishController {
       */
      @ResponseBody
      @GetMapping("/r/coursepublish/{courseId}")
-     @PermissionMethod(permission = "course_manager_course_all")
      public BaseResponse<CoursePublish> getCoursepublish(@PathVariable("courseId") Long courseId) {
           return ResultUtils.success(coursePublishService.getCoursePublish(courseId));
      }
@@ -57,7 +55,6 @@ public class CoursePublishController {
       * @param courseId 课程Id
       */
      @ResponseBody
-     @PermissionMethod(permission = "course_manager_course_all")
      @PostMapping("/courseaudit/commit/{courseId}")
      public void commitAudit(@PathVariable("courseId") Long courseId, HttpServletRequest request){
           coursePublishService.commitAudit(courseId,request);
@@ -69,7 +66,6 @@ public class CoursePublishController {
       * @param courseId 课程Id
       */
      @ResponseBody
-     @PermissionMethod(permission = "course_manager_course_all")
      @PostMapping ("/coursepublish/{courseId}")
      public void coursepublish(@PathVariable("courseId") Long courseId,HttpServletRequest request){
           coursePublishService.publish(request,courseId);

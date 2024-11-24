@@ -2,8 +2,9 @@ package com.kimo.ucenter.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kimo.api.dto.UserDto;
 import com.kimo.ucenter.model.po.Token;
-import com.kimo.ucenter.model.dto.UserDto;
+
 
 import java.util.List;
 

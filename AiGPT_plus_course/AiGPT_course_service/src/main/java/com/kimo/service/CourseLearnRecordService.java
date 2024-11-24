@@ -15,6 +15,6 @@ public interface CourseLearnRecordService extends IService<CourseLearnRecord> {
 
     Boolean updateCourseRecord(CourseLearnRecordTimeDto courseLearnRecordTimeDto, HttpServletRequest request);
 
-    Wrapper<CourseLearnRecord> getQueryWrapper(long id, QueryCourseParamsDto queryCourseParams, HttpServletRequest request);
+    Wrapper<CourseLearnRecord> getQueryWrapper(QueryCourseParamsDto queryCourseParams, HttpServletRequest request);
 
 }

@@ -1,13 +1,13 @@
-package com.kimo.ucenter.mapper;
+package com.kimo.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.kimo.ucenter.model.po.Roles;
+import com.kimo.model.po.Roles;
 
 /**
-* @author Mr.kimo
+* @author chen
 * @description 针对表【roles(角色)】的数据库操作Mapper
-* @createDate 2024-10-31 11:18:07
+* @createDate 2024-11-21 19:32:53
 * @Entity generator.domain.Roles
 */
 public interface RolesMapper extends BaseMapper<Roles> {

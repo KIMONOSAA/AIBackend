@@ -14,7 +14,10 @@ import java.util.Map;
  */
 public interface QuestionService extends IService<Question> {
 
-    void extractData(MultipartFile multipartFile);
+    void extractData(MultipartFile multipartFile,HttpServletRequest request);
 
     Map<String, Wrapper<Question>> getQueryWrapper(QuestionQueryRequest questionQueryRequest, HttpServletRequest request);
+
+    Question selectById(Long questionId);
+
 }

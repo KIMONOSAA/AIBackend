@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ErrorCode;
 import com.kimo.common.ResultUtils;
@@ -15,12 +17,13 @@ import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.MediaFilesMapper;
 import com.kimo.model.dto.BinFIleListDto;
 import com.kimo.model.dto.UploadFileParamsDto;
 import com.kimo.model.dto.UploadFileResultDto;
-import com.kimo.model.dto.UserDto;
+
+
 import com.kimo.model.po.MediaFiles;
 import com.kimo.service.MediaFilesService;
 import com.kimo.utils.ServletUtils;
@@ -223,8 +226,13 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
     }
 
     @Override
-    public BaseResponse<Boolean> checkFile(String fileMd5) {
-        //查询文件信息
+    public BaseResponse<Boolean> checkFile(String fileMd5,HttpServletRequest request) {
+         UserDto userDto = servletUtils.getUserDtoForRedisOrLock(request,SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDto == null,ErrorCode.ADD_DATABASE_ERROR);
+        String code = servletUtils.getRoleForPermission(userDto);
+
+        servletUtils.ensuperAdminOrAdmin(code,"2000002");
+         //查询文件信息
         MediaFiles mediaFiles = mediaFilesMapper.selectById(fileMd5);
         if (mediaFiles != null) {
             //桶
@@ -254,8 +262,12 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
 
 
     @Override
-    public BaseResponse<Boolean> checkChunk(String fileMd5, int chunkIndex) {
+    public BaseResponse<Boolean> checkChunk(String fileMd5, int chunkIndex,HttpServletRequest request) {
+        UserDto userDto = servletUtils.getUserDtoForRedisOrLock(request,SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDto == null,ErrorCode.ADD_DATABASE_ERROR);
+        String code = servletUtils.getRoleForPermission(userDto);
 
+        servletUtils.ensuperAdminOrAdmin(code,"2000002");
         //得到分块文件目录
         String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
         //得到分块文件的路径
@@ -291,8 +303,11 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
     @Transactional
     @Override
     public UploadFileResultDto uploadFile(UploadFileParamsDto uploadFileParamsDto, MultipartFile fileStream, String objectName,HttpServletRequest request) throws IOException {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto userDto = userClient.GobalGetLoginUser(username);
+        UserDto userDto = servletUtils.getUserDtoForRedisOrLock(request,SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDto == null,ErrorCode.ADD_DATABASE_ERROR);
+        String code = servletUtils.getRoleForPermission(userDto);
+
+        servletUtils.ensuperAdminOrAdmin(code,"2000004");
 
         Long userId = userDto.getId();
         // 文件名称
@@ -331,7 +346,13 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
     }
 
     @Override
-    public BaseResponse uploadChunk(String fileMd5, int chunk, InputStream fileStream) {
+    public BaseResponse uploadChunk(String fileMd5, int chunk, InputStream fileStream,HttpServletRequest request) {
+
+        UserDto userDto = servletUtils.getUserDtoForRedisOrLock(request,SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDto == null,ErrorCode.ADD_DATABASE_ERROR);
+        String code = servletUtils.getRoleForPermission(userDto);
+
+        servletUtils.ensuperAdminOrAdmin(code,"2000002");
         //得到分块文件的目录路径
         String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
         //得到分块文件的路径
@@ -351,8 +372,11 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
     @Override
     //todo
     public BaseResponse mergechunks(String fileMd5, int chunkTotal, UploadFileParamsDto uploadFileParamsDto,HttpServletRequest request) {
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto userDto = userClient.GobalGetLoginUser(username);
+        UserDto userDto = servletUtils.getUserDtoForRedisOrLock(request,SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDto == null,ErrorCode.ADD_DATABASE_ERROR);
+        String code = servletUtils.getRoleForPermission(userDto);
+
+        servletUtils.ensuperAdminOrAdmin(code,"2000004");
         String managerId = userDto.getId().toString();
         Long companyId = userDto.getId();
 //        String id = "1794941858414170113";
@@ -426,9 +450,11 @@ public class MediaFilesServiceImpl extends ServiceImpl<MediaFilesMapper, MediaFi
     @Override
     public Wrapper<MediaFiles> getQueryWrapper(BinFIleListDto binFIleListDto, HttpServletRequest request) {
 
-        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-        UserDto userDto = userClient.GobalGetLoginUser(username);
-        ThrowUtils.throwIf(userDto == null,ErrorCode.NOT_LOGIN_ERROR);
+        UserDto userDto = servletUtils.getUserDtoForRedisOrLock(request,SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDto == null,ErrorCode.ADD_DATABASE_ERROR);
+        String code = servletUtils.getRoleForPermission(userDto);
+
+        servletUtils.ensuperAdminOrAdmin(code,"2000002");
 
         QueryWrapper<MediaFiles> queryWrapper = new QueryWrapper<>();
         if (binFIleListDto == null) {

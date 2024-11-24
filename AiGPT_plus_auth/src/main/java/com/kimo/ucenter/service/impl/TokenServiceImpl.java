@@ -2,11 +2,12 @@ package com.kimo.ucenter.service.impl;
 
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.exception.BusinessException;
 import com.kimo.ucenter.mapper.TokenMapper;
 import com.kimo.ucenter.model.po.Token;
-import com.kimo.ucenter.model.dto.UserDto;
+
 import com.kimo.ucenter.service.TokenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

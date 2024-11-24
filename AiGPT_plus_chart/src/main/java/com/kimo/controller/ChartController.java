@@ -306,6 +306,7 @@ public class ChartController {
         gouZiAdditionalMessages.setContent(gouZiAdditionalMessagesAndMaster.getContent());
         Long masterId = gouZiAdditionalMessagesAndMaster.getMasterId();
         Long sessionId = gouZiAdditionalMessagesAndMaster.getSessionId();
+        String message = gouZiAdditionalMessagesAndMaster.getMessage();
         ThrowUtils.throwIf(masterId == null,ErrorCode.NOT_FOUND_ERROR);
         ThrowUtils.throwIf(sessionId == null,ErrorCode.NOT_FOUND_ERROR);
         Map<String, String> courseInfoDataForCouZi = null;
@@ -313,7 +314,7 @@ public class ChartController {
             courseInfoDataForCouZi = chartService.fetchCourseInfoForChart(gouZiAdditionalMessages,botId,token, courseIId, request);
             courseInfoDataForCouZi.put("masterId",masterId.toString());
             courseInfoDataForCouZi.put("sessionId",sessionId.toString());
-            chartService.ensureAndUpdateAiMasterData(courseInfoDataForCouZi,"图片识别");
+            chartService.ensureAndUpdateAiMasterData(courseInfoDataForCouZi,message);
         } catch (Exception e) {
             log.info("错误：",e.getMessage());
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
@@ -340,7 +341,7 @@ public class ChartController {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        chartService.ensureAndUpdateAiMasterData(courseInfoDataForCouZi,title);
+        chartService.ensureAndCreateAiMasterDataForCourse(courseInfoDataForCouZi,title);
         return ResultUtils.success(courseInfoDataForCouZi.get("aiData"));
     }
 

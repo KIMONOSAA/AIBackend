@@ -45,7 +45,7 @@ public interface MediaFilesService extends IService<MediaFiles> {
      * @return Boolean false不存在，true存在
      *
      */
-    public BaseResponse<Boolean> checkFile(String fileMd5);
+    public BaseResponse<Boolean> checkFile(String fileMd5,HttpServletRequest request);
 
 
 
@@ -57,7 +57,7 @@ public interface MediaFilesService extends IService<MediaFiles> {
      * @param chunkIndex  分块序号
      * @return Boolean false不存在，true存在
      */
-    public BaseResponse<Boolean> checkChunk(String fileMd5, int chunkIndex);
+    public BaseResponse<Boolean> checkChunk(String fileMd5, int chunkIndex,HttpServletRequest request);
 
     /**
      * 上传分块
@@ -65,7 +65,7 @@ public interface MediaFilesService extends IService<MediaFiles> {
      * @param chunk  分块序号
      * @return BaseResponse
      */
-    public BaseResponse uploadChunk(String fileMd5, int chunk, InputStream file);
+    public BaseResponse uploadChunk(String fileMd5, int chunk, InputStream file,HttpServletRequest request);
 
 
     /**

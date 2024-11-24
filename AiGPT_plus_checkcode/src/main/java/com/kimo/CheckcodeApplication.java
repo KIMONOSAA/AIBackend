@@ -7,8 +7,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 //@EnableFeignClients
-@EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients  //入口类加入注解开启OpenFeign支持
+@EnableDiscoveryClient  //都是能够让注册中心能够发现，扫描到该服务。
 public class CheckcodeApplication {
 
     public static void main(String[] args) {

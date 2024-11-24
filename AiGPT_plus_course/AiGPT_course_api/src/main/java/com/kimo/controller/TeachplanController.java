@@ -2,7 +2,6 @@ package com.kimo.controller;
 
 
 
-import com.kimo.annotation.PermissionMethod;
 import com.kimo.common.BaseResponse;
 import com.kimo.common.ResultUtils;
 import com.kimo.model.dto.BindTeachplanMediaDto;
@@ -42,7 +41,6 @@ public class TeachplanController {
      * @param teachplan 包含教学计划信息的 DTO 对象
      */
     @PostMapping("/teachplan")
-    @PermissionMethod(permission = "course_manager_course_all")
     public void saveTeachplan( @RequestBody SaveTeachplanDto teachplan){
         teachplanService.saveTeachplan(teachplan);
     }
@@ -52,7 +50,6 @@ public class TeachplanController {
      *
      */
     @PostMapping("/teachplan/association/media")
-    @PermissionMethod(permission = "course_manager_course_all")
     void associationMedia(@RequestBody BindTeachplanMediaDto bindTeachplanMediaDto){
         teachplanService.associationMedia(bindTeachplanMediaDto);
     }

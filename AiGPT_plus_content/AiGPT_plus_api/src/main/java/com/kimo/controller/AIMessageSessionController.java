@@ -2,6 +2,7 @@ package com.kimo.controller;
 
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.*;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.exception.BusinessException;
@@ -11,7 +12,7 @@ import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionAddRequest;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionQueryRequest;
 import com.kimo.model.dto.aiMessageSession.AIMessageSessionUpdateRequest;
-import com.kimo.model.dto.user.UserDto;
+
 import com.kimo.model.entity.AIMessageSession;
 import com.kimo.service.AIMessageSessionService;
 

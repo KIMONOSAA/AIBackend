@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.config.WebSocketHandler;
 import com.kimo.constant.CommonConstant;
@@ -16,14 +18,14 @@ import com.kimo.domain.CouZiCompletionRequest;
 import com.kimo.domain.GouZiAdditionalMessages;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.listener.CouZiEventSourceListener;
 import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.AIMessageSessionMapper;
 import com.kimo.mapper.PointMapper;
 
 import com.kimo.model.dto.chart.AIMasterDataQueryRequest;
-import com.kimo.model.dto.chart.UserDto;
+
 import com.kimo.model.dto.po.AIMasterData;
 import com.kimo.model.dto.po.AIMessageSession;
 import com.kimo.model.dto.po.Point;

@@ -3,10 +3,12 @@ package com.kimo.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.constant.SecurityConstants;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.AccuracyChartMapper;
-import com.kimo.model.dto.chart.UserDto;
+
 import com.kimo.model.dto.po.AccuracyChart;
 import com.kimo.service.AccuracyChartService;
 import com.kimo.utils.ServletUtils;

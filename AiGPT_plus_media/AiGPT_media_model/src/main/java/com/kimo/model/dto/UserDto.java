@@ -1,10 +1,9 @@
 package com.kimo.model.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+
 import lombok.Data;
 
 import java.io.Serializable;
-
 
 /**
  * @author Mr.kimo
@@ -18,10 +17,10 @@ public class UserDto implements Serializable{
 
     private Long roleId;
 
+
     private String qualification;
 
     private String grade;
-
 
     /**
      * USER/Admin
@@ -38,6 +37,10 @@ public class UserDto implements Serializable{
      */
     private String email;
 
+    /**
+     * 密码
+     */
+    private String userPassword;
 
     /**
      * 用户昵称

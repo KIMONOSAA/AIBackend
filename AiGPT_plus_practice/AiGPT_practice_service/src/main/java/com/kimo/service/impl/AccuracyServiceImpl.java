@@ -2,7 +2,8 @@ package com.kimo.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
-import com.kimo.feignclient.ChartClient;
+
+import com.kimo.api.client.ChartClient;
 import com.kimo.mapper.AccuracyMapper;
 import com.kimo.model.dto.GouZiAdditionalMessages;
 import com.kimo.model.po.Accuracy;

@@ -29,6 +29,7 @@ public class SwaggerProvider implements SwaggerResourcesProvider {
         resources.add(swaggerResource("练习系统", "/practice/v3/api-docs", "practice"));
         resources.add(swaggerResource("课程系统", "/course/v3/api-docs", "course"));
         resources.add(swaggerResource("订单系统", "/order/v3/api-docs", "course"));
+        resources.add(swaggerResource("权限系统", "/permission/v3/api-docs", "permission"));
         return resources;
     }
 

@@ -17,11 +17,11 @@ public interface RabbitMQConstant {
     /**
      * direct 交换机
      */
-    public static final  String PRACTICE_DIRECT_EXCHANGE = "practice_chart_exchange";
+    public static final  String PRACTICE_DIRECT_EXCHANGE = "practice1_chart_exchange";
 
-    public static final  String PRACTICE_DIRECT_QUEUE = "practice_chart_queue";
+    public static final  String PRACTICE_DIRECT_QUEUE = "practice1_chart_queue";
 
-    public static final String PRACTICE_DIRECT_ROUTING_KEY = "practice_chart";
+    public static final String PRACTICE_DIRECT_ROUTING_KEY = "practice1_chart";
 
 
     /**

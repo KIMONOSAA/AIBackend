@@ -5,6 +5,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
@@ -13,11 +15,12 @@ import com.kimo.domain.CouZiCompletionEventResponse;
 import com.kimo.domain.CouZiCompletionRequest;
 import com.kimo.domain.GouZiAdditionalMessages;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.AIMasterdataMapper;
 import com.kimo.mapper.PointMapper;
 import com.kimo.model.dto.aiMaster.AIMasterDataQueryRequest;
-import com.kimo.model.dto.user.UserDto;
+
+
 import com.kimo.model.entity.AIMasterData;
 import com.kimo.model.entity.Point;
 import com.kimo.service.AIMasterDataService;

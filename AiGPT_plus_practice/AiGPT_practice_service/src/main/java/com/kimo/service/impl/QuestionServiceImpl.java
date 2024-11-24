@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import com.kimo.api.client.UserClient;
+import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
 import com.kimo.config.RedisIdWorker;
 import com.kimo.constant.ChartConstant;
@@ -13,12 +15,12 @@ import com.kimo.constant.CommonConstant;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.feignclient.UserClient;
+
 import com.kimo.mapper.AccuracyMapper;
 import com.kimo.mapper.PracticeRecordMapper;
 import com.kimo.mapper.QuestionMapper;
 import com.kimo.model.dto.QuestionQueryRequest;
-import com.kimo.model.dto.UserDto;
+
 import com.kimo.model.po.Accuracy;
 import com.kimo.model.po.PracticeRecord;
 import com.kimo.model.po.Question;
@@ -66,6 +68,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
     @Autowired
     private AccuracyMapper accuracyMapper;
 
+    @Autowired
+    private QuestionMapper questionMapper;
+
 
     /**
      * 从上传的 Excel 文件中提取数据并添加到数据库中。
@@ -78,7 +83,12 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
      */
     @Override
     @Transactional
-    public void extractData(MultipartFile multipartFile) {
+    public void extractData(MultipartFile multipartFile,HttpServletRequest request) {
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"1000001");
         //1.检查文件是否是xls，并且文件是否超过1MB
         long size = multipartFile.getSize();
         String originalFilename = multipartFile.getOriginalFilename();
@@ -122,7 +132,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
         Long courseId = questionQueryRequest.getCourseId();
         Long teacherId = questionQueryRequest.getTeacherId();
         ThrowUtils.throwIf(userDtoId.isEmpty(),ErrorCode.NOT_LOGIN_ERROR);
-        ThrowUtils.throwIf(teacherId == null || teacherId.toString().isEmpty(),ErrorCode.NOT_LOGIN_ERROR);
+//        ThrowUtils.throwIf(teacherId == null || teacherId.toString().isEmpty(),ErrorCode.NOT_LOGIN_ERROR);
         ThrowUtils.throwIf(courseId == null || courseId.toString().isEmpty(),ErrorCode.NOT_LOGIN_ERROR);
 
         //创建答题记录
@@ -203,6 +213,11 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question>
 
 
         return questionMap;
+    }
+
+    @Override
+    public Question selectById(Long questionId) {
+        return questionMapper.selectById(questionId);
     }
 
     private void addQuestion(QuestionDataVO questionDataVO) {

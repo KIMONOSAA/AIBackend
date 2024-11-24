@@ -19,6 +19,17 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.kimo</groupId>
+            <artifactId>gateway_Interceptor_sdk</artifactId>
+            <version>0.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kimo</groupId>
+            <artifactId>xueban-api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -85,12 +96,7 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.kimo</groupId>
-            <artifactId>AiGPT_plus_permission</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
+
 
     </dependencies>
 </project>

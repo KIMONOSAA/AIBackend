@@ -35,14 +35,14 @@ public class PracticeChartProducer {
 
             // 将 Map 转换为 JSON 字符串
             String combinedMessageJson = objectMapper.writeValueAsString(combinedMessage);
-            rabbitTemplate.setConfirmCallback((correlationData,ack,cause) -> {
-                if(ack){
-                    log.info("发送成功到交换机");
-                }else{
-                    log.error("图表状态更改失败");
-
-                }
-            });
+//            rabbitTemplate.setConfirmCallback((correlationData,ack,cause) -> {
+//                if(ack){
+//                    log.info("发送成功到交换机");
+//                }else{
+//                    log.error("图表状态更改失败");
+//
+//                }
+//            });
             rabbitTemplate.convertAndSend(RabbitMQConstant.PRACTICE_DIRECT_EXCHANGE,
                     RabbitMQConstant.PRACTICE_DIRECT_ROUTING_KEY,
                     combinedMessageJson,

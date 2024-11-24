@@ -10,6 +10,7 @@ import com.kimo.model.UserDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -31,13 +32,12 @@ public class ServletUtils
     private JwtService jwtService;
 
     @Autowired
+    @Qualifier("redisTemplate")
     private RedisTemplate<String,String> redisTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private RedissonClient redissonClient;
 
 
     public UserDto getHeaderRedisForUser(HttpServletRequest request, String name)
