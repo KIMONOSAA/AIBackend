@@ -4,12 +4,12 @@ import com.kimo.common.BaseResponse;
 import com.kimo.common.ErrorCode;
 import com.kimo.common.ResultUtils;
 import com.kimo.model.dto.*;
+import com.kimo.model.po.CourseLearnRecord;
 import com.kimo.service.CourseLearnRecordService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 /**
  * @author Mr.kimo
  */
@@ -33,5 +33,12 @@ public class CourseLearnRecordController {
         return ResultUtils.error(ErrorCode.ADD_COURSE_INFO_ERROR);
 
     }
+
+    @GetMapping("/course/self/{courseId}")
+    public BaseResponse<CourseLearnRecord> getCourseRecord(@PathVariable("courseId") Long courseId, HttpServletRequest request) {
+        CourseLearnRecord courseLearnRecord = courseLearnRecordDto.getCourseMyLearnByCourseId(request,courseId);
+        return ResultUtils.success(courseLearnRecord);
+    }
+
 
 }

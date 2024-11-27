@@ -163,7 +163,7 @@ public class CourseBaseInfoController {
 
 
         Page<CourseBase> aiRolesPage = courseBaseService.page(new Page<>(current, size),
-                courseBaseService.getQueryWrapperList(coursePublishListDto,request));
+                courseBaseService.getQueryWrapperListForMember(coursePublishListDto,request));
         return ResultUtils.success(aiRolesPage);
     }
 
@@ -171,11 +171,7 @@ public class CourseBaseInfoController {
     /**
      * 删除课程
      */
-    /**
-     * 修改课程
-     * @return
-     */
-    @PutMapping("/deleted/course")
+   @PutMapping("/deleted/course")
     public BaseResponse<Boolean> deletedCourseBase(@RequestParam("courseId") Long courseId,HttpServletRequest request){
 
         return ResultUtils.success(courseBaseInfoService.deletedCourseBase(courseId,request));

@@ -73,10 +73,10 @@ public class AIMasterDataController {
         String token = AI_QUESTION_AND_ANSWER_BOT_TOKEN;
         // 校验
         Map<String,String> AIResult =  aiMasterDataService.getChartDataForCouZiChart(aiMasterData, request,botId,user,token);
-        if(StringUtils.isBlank(aiMasterData.getUserTitle())){
+        if(StringUtils.isBlank(aiMasterData.getUserBody())){
             return ResultUtils.error(ErrorCode.NOT_FOUND_ERROR);
         }
-        aiMasterDataService.IsAiMessagesessionForCourse(AIResult,aiMasterDataAddRequest.getUserTitle());
+        aiMasterDataService.IsAiMessagesessionForCourse(AIResult,aiMasterData.getUserBody());
         return ResultUtils.success(aiMasterData);
     }
 

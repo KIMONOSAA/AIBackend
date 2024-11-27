@@ -21,8 +21,15 @@ public class DefaultFeignConfig {
             public void apply(RequestTemplate template) {
                 String userForToken = UseIdHolder.getUserForToken();
                 String userForToken1 = HeaderHolder.getUserForToken();
-                template.header("authorization", userForToken);
-                template.header("X-GatewayTokenHeader", userForToken1);
+//                if (userForToken != null && userForToken1 != null) {
+//                    template.header("Authorization", "Bearer " + userForToken);
+//                }
+
+                if (userForToken != null && userForToken1 != null) {
+                    template.header("authorization", userForToken);
+                    template.header("X-GatewayTokenHeader", userForToken1);
+                }
+
             }
         };
     }

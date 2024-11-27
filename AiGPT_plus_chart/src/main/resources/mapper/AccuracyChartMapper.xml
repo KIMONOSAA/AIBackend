@@ -8,7 +8,6 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="genChat" column="gen_chat" jdbcType="VARCHAR"/>
             <result property="status" column="status" jdbcType="VARCHAR"/>
-            <result property="execMessage" column="exec_message" jdbcType="VARCHAR"/>
             <result property="genResult" column="gen_result" jdbcType="VARCHAR"/>
             <result property="userId" column="user_id" jdbcType="BIGINT"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
@@ -17,8 +16,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,gen_chat,status,
-        exec_message,gen_result,user_id,
+        id,gen_chat,status,gen_result,user_id,
         create_time,update_time,is_delete
     </sql>
 </mapper>

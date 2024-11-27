@@ -6,10 +6,8 @@
 
     <resultMap id="BaseResultMap" type="com.kimo.model.dto.po.AIMasterData">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="aiTitle" column="aiTitle" jdbcType="VARCHAR"/>
             <result property="aiBody" column="aiBody" jdbcType="VARCHAR"/>
-            <result property="aiResult" column="aiResult" jdbcType="VARCHAR"/>
-            <result property="userTitle" column="userTitle" jdbcType="VARCHAR"/>
+
             <result property="userBody" column="userBody" jdbcType="VARCHAR"/>
         <result property="pic" column="user_avatar" javaType="java.sql.Blob" jdbcType="BLOB" typeHandler="org.apache.ibatis.type.BlobTypeHandler"/>
         <result property="userId" column="userId" jdbcType="BIGINT"/>
@@ -20,8 +18,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,aiTitle,aiBody,pic,
-        aiResult,userTitle,userBody,
+        id,aiBody,pic,userBody,
         userId,createTime,updateTime,
         isDelete,aiMessageSessionId
     </sql>

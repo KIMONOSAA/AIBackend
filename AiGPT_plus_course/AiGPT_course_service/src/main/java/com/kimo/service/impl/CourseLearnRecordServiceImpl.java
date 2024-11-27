@@ -206,6 +206,23 @@ public class CourseLearnRecordServiceImpl extends ServiceImpl<CourseLearnRecordM
         }
         return queryWrapper;
     }
+
+    @Override
+    public CourseLearnRecord getCourseMyLearnByCourseId(HttpServletRequest request, Long courseId) {
+        UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null, ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        QueryWrapper<CourseLearnRecord> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(SqlConstants.USER_ID, userId);
+        queryWrapper.eq("id",courseId);
+        CourseLearnRecord courseLearnRecord = null;
+
+        try {
+           return courseLearnRecord = courseLearnRecordMapper.selectOne(queryWrapper);
+        }catch (Exception e){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"错误的多个课程数据");
+        }
+    }
 }
 
 

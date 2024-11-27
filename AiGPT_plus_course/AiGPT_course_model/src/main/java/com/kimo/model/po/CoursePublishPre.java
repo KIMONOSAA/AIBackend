@@ -124,6 +124,9 @@ public class CoursePublishPre implements Serializable {
      */
     private Integer validDays;
 
+
+    private Long courseId;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 

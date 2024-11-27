@@ -44,4 +44,6 @@ public interface CourseBaseService extends IService<CourseBase> {
     List<TeachplanListDto> findTeachplanTreeRedis(Long courseId);
 
     Boolean deletedCourseBase(Long courseId, HttpServletRequest request);
+
+    Wrapper<CourseBase> getQueryWrapperListForMember(CoursePublishListDto coursePublishListDto, HttpServletRequest request);
 }

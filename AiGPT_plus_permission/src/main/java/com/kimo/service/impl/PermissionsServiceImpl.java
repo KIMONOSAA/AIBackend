@@ -71,7 +71,7 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
     public List<Permissions> getUserPermissions(UserPermissionDto user) {
         Roles roles = rolesMapper.selectById(user.getRoleId());
         QueryWrapper<Permissions> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("role_id", roles.getId());
+        queryWrapper.eq("role_id", roles.getRoleId());
 
         return permissionsMapper.selectList(queryWrapper);
     }

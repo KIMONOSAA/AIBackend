@@ -7,6 +7,7 @@
     <resultMap id="BaseResultMap" type="com.kimo.model.po.CoursePublishPre">
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="managerId" column="manager_id" jdbcType="BIGINT"/>
+        <result property="courseId" column="course_id" jdbcType="BIGINT"/>
             <result property="manager" column="manager" jdbcType="VARCHAR"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="users" column="users" jdbcType="VARCHAR"/>
@@ -36,7 +37,7 @@
         pic,description,market,
         teachplan,teachers,create_date,
         audit_date,status,remark,
-        charge,member_price,
+        charge,member_price,course_id,
         valid_days
     </sql>
 </mapper>

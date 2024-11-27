@@ -491,8 +491,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(SqlConstants.EMAIL_NAME, email);
         User user = userMapper.selectOne(queryWrapper);
-        if (user == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户不存在");
+        if (user != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户已存在");
         }
 
         long key = IdWorkerUtils.getInstance().nextId();

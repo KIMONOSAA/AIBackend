@@ -25,4 +25,7 @@ public interface RolesService extends IService<Roles> {
     Wrapper<Roles> getQueryWrapper(UserRoleQueryRequest userPermissionQueryRequest,HttpServletRequest request);
 
     Roles getRolesById(String roleId,HttpServletRequest request);
+
+    Boolean getUserIsAdmin(HttpServletRequest request);
+
 }

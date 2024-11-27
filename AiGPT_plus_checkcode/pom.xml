@@ -18,11 +18,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>com.kimo</groupId>
-            <artifactId>gateway_Interceptor_sdk</artifactId>
-            <version>0.0.4</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.kimo</groupId>-->
+<!--            <artifactId>gateway_Interceptor_sdk</artifactId>-->
+<!--            <version>0.0.4</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>

@@ -620,12 +620,14 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         }
         QueryWrapper<TeachplanMedia> teachplanMediaQueryWrapper = new QueryWrapper<>();
         teachplanMediaQueryWrapper.eq("course_id", courseId);
-        teachplanMediaQueryWrapper.eq("user_id", userId);
         teachplanMediaQueryWrapper.eq("teachplan_id",teachId);
         TeachplanMedia teachplanMedia = teachplanMediaMapper.selectOne(teachplanMediaQueryWrapper);
         int isTeachplanMedia = teachplanMediaMapper.deleteById(teachplanMedia.getId());
 
         int isTeachplan = teachplanMapper.deleteById(teachId);
+        String redis_teachplan = REDIS_COURSE_TEACHPLAN + courseId;
+        Boolean delete = redisTemplate.delete(redis_teachplan);
+        ThrowUtils.throwIf(!delete,ErrorCode.OPERATION_ERROR,"缓存删除错误");
         return isTeachplan == 1 && isTeachplanMedia == 1;
     }
 
@@ -692,10 +694,35 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         ensuperAdminOrAdmin(code,"900004");
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
-        CourseBase courseBase = courseBaseMapper.selectById(userId);
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
         ThrowUtils.throwIf(courseBase == null,ErrorCode.COURSE_NOT_FOUND);
+
         courseBaseMapper.deleteById(courseId);
+
+
         return true;
+    }
+
+    @Override
+    public Wrapper<CourseBase> getQueryWrapperListForMember(CoursePublishListDto coursePublishListDto, HttpServletRequest request) {
+        QueryWrapper<CourseBase> queryWrapper = new QueryWrapper<>();
+        UserDto userDtoForRedisOrLock = this.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = getRoleForPermission(userDtoForRedisOrLock);
+
+        ensuperAdminOrAdmin(code,"900001");
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_FOUND_ERROR);
+
+        queryWrapper.lambda().eq(StringUtils.isNotEmpty(coursePublishListDto.getTags()), CourseBase::getTags, coursePublishListDto.getTags());
+
+//        queryWrapper.eq("status", "203002");
+
+        // 获取排序字段和排序顺序
+        String sortField = coursePublishListDto.getSortField();
+        String sortOrder = coursePublishListDto.getSortOrder();
+
+        handleSort(queryWrapper, sortField, sortOrder);
+        return queryWrapper;
     }
 
 

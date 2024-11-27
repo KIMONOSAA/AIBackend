@@ -23,20 +23,12 @@ public class AIMasterData implements Serializable {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
-    /**
-     * ai标题
-     */
-    private String aiTitle;
 
     /**
      * ai内容
      */
     private String aiBody;
 
-    /**
-     * ai结果
-     */
-    private String aiResult;
 
     /**
      * 消息会话Id
@@ -46,10 +38,6 @@ public class AIMasterData implements Serializable {
 
     private byte[] pic;
 
-    /**
-     * 用户标题
-     */
-    private String userTitle;
 
     /**
      * 用户内容

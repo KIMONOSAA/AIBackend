@@ -338,6 +338,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
 
 
     @Override
+    @Transactional
     public Map<String, String> fetchCourseInfoForChart(GouZiAdditionalMessages additionalMessages, String botId, String token, String courseId, HttpServletRequest request) {
         // 获取用户信息
         Map<String, String> loginUserInfo = getUserInfoFromRequest(request);

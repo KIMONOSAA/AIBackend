@@ -161,6 +161,30 @@ public class RolesServiceImpl extends ServiceImpl<RolesMapper, Roles>
         return rolesMapper.selectById(roleId);
     }
 
+    @Override
+    public Boolean getUserIsAdmin(HttpServletRequest request) {
+        UserDto userFromCacheOrDb = permissionsService.getUserFromCacheOrDb(request);
+        String code = servletUtils.getRoleForPermission(userFromCacheOrDb);
+        ArrayList<String> strings = new ArrayList<>();
+        servletUtils.ensuperAdminOrAdmin(code,"114514");
+        Long id = userFromCacheOrDb.getId();
+        QueryWrapper<Roles> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", id);
+        Roles roles = rolesMapper.selectOne(queryWrapper);
+        if (roles == null) {
+            return false;
+        }
+        String rolesName = roles.getRolesName();
+        try {
+            strings = OBJECT_MAPPER.readValue(rolesName,new TypeReference<ArrayList<String>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        return strings.contains("ADMIN");
+
+    }
+
     /**
      * 处理排序逻辑
      */

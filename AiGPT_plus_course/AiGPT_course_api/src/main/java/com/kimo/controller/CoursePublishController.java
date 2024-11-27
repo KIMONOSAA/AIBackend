@@ -2,7 +2,10 @@ package com.kimo.controller;
 
 
 import com.kimo.common.BaseResponse;
+import com.kimo.common.ErrorCode;
 import com.kimo.common.ResultUtils;
+import com.kimo.exception.ThrowUtils;
+import com.kimo.model.dto.CourseAuditRequest;
 import com.kimo.model.dto.CourseLearnRecordDto;
 import com.kimo.model.dto.CoursePreviewDto;
 import com.kimo.model.po.CoursePublish;
@@ -70,6 +73,62 @@ public class CoursePublishController {
      public void coursepublish(@PathVariable("courseId") Long courseId,HttpServletRequest request){
           coursePublishService.publish(request,courseId);
      }
+
+
+     @PostMapping("/course/audit/success")
+     /**
+      * @Author: Mr.kimo
+      * @Date: 17:44
+      * @return: com.kimo.common.BaseResponse<java.lang.Boolean>
+      * @Param: [java.lang.Long, java.lang.Long, jakarta.servlet.http.HttpServletRequest]
+      * @Description:课程审核通过
+      */
+     public BaseResponse<Boolean> auditSuccess(@RequestBody CourseAuditRequest courseAuditRequest, HttpServletRequest request){
+          Long courseId = courseAuditRequest.getCourseId();
+          String suggestion = courseAuditRequest.getSuggestion();
+          Long managerId = courseAuditRequest.getManagerId();
+          ThrowUtils.throwIf(courseId <= 0, ErrorCode.NOT_FOUND_ERROR);
+          ThrowUtils.throwIf(managerId <= 0, ErrorCode.NOT_FOUND_ERROR);
+          ThrowUtils.throwIf(suggestion == null, ErrorCode.NOT_FOUND_ERROR);
+          Boolean audit = coursePublishService.auditSuccess(courseId,request,managerId,suggestion);
+          return ResultUtils.success(audit);
+     }
+
+     @PostMapping("/course/audit/Wrong/{courseId}/{managerId}")
+     /**
+      * @Author: Mr.kimo
+      * @Date: 17:44
+      * @return: com.kimo.common.BaseResponse<java.lang.Boolean>
+      * @Param: [java.lang.Long, java.lang.Long, jakarta.servlet.http.HttpServletRequest]
+      * @Description:课程审核不通过
+      */
+     public BaseResponse<Boolean> auditWrong(@RequestBody CourseAuditRequest courseAuditRequest, HttpServletRequest request){
+          Long courseId = courseAuditRequest.getCourseId();
+          String suggestion = courseAuditRequest.getSuggestion();
+          Long managerId = courseAuditRequest.getManagerId();
+          ThrowUtils.throwIf(courseId <= 0, ErrorCode.NOT_FOUND_ERROR);
+          ThrowUtils.throwIf(managerId <= 0, ErrorCode.NOT_FOUND_ERROR);
+          ThrowUtils.throwIf(suggestion == null, ErrorCode.NOT_FOUND_ERROR);
+          Boolean audit = coursePublishService.auditWrong(courseId,request,managerId,suggestion);
+          return ResultUtils.success(audit);
+     }
+
+
+     /**
+      * @Author: Mr.kimo
+      * @Date: 18:05
+      * @return:
+      * @Param:
+      * @Description:课程下线
+      */
+     @PostMapping("/course/courseOffline/{courseId}/{managerId}")
+     public BaseResponse<Boolean> courseOffline(@PathVariable("courseId") Long courseId,@PathVariable("managerId") Long managerId, HttpServletRequest request){
+          Boolean isOffLine = coursePublishService.courseOffLine(courseId,managerId,request);
+
+          return ResultUtils.success(isOffLine);
+     }
+
+
 
 
 

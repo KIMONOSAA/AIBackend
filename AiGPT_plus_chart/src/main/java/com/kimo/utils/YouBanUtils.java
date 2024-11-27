@@ -41,7 +41,7 @@ public class YouBanUtils {
 
     public static @NotNull GouZiAdditionalMessages createGouZiAdditionalMessages(AIMasterData chartData) {
         GouZiAdditionalMessages goZeAdditionalMessages = new GouZiAdditionalMessages();
-        goZeAdditionalMessages.setContent(chartData.getUserTitle());
+        goZeAdditionalMessages.setContent(chartData.getUserBody());
         goZeAdditionalMessages.setRole("user");
         goZeAdditionalMessages.setContent_type("text");
         return goZeAdditionalMessages;

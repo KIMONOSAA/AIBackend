@@ -11,7 +11,7 @@ import com.kimo.common.ResultUtils;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
-import com.kimo.mapper.AccuracyMapper;
+//import com.kimo.mapper.AccuracyMapper;
 import com.kimo.model.dto.*;
 import com.kimo.model.po.Accuracy;
 import com.kimo.model.po.Question;

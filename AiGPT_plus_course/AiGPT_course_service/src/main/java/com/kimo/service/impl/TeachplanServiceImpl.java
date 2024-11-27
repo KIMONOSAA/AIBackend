@@ -16,12 +16,15 @@ import com.kimo.service.TeachplanService;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+
+import static com.kimo.constant.CaffeineConstant.REDIS_COURSE_TEACHPLAN;
 
 /**
  * @author Mr.kimo
@@ -35,6 +38,9 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
 
     @Autowired
     private TeachplanMediaMapper teachplanMediaMapper;
+
+    @Autowired
+    private RedisTemplate<String,String> redisTemplate;
 
     @Transactional
     @Override
@@ -65,8 +71,11 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
     }
 
     @Override
+    @Transactional
     public void saveTeachplan(SaveTeachplanDto saveTeachplanDto) {
         //课程计划id
+        Long courseId = saveTeachplanDto.getCourseId();
+
         Long id = saveTeachplanDto.getId();
         //修改课程计划
         if(id!=null){
@@ -86,6 +95,8 @@ public class TeachplanServiceImpl extends ServiceImpl<TeachplanMapper, Teachplan
             teachplanMapper.insert(teachplanNew);
 
         }
+        String redis_teachplan = REDIS_COURSE_TEACHPLAN + courseId;
+        redisTemplate.delete(redis_teachplan);
     }
 
     @Override

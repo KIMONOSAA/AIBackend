@@ -2,9 +2,11 @@ package com.kimo.ucenter.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+
 import com.kimo.api.dto.UserDto;
 import com.kimo.common.DeleteRequest;
 import com.kimo.common.PageRequest;
+
 
 import com.kimo.ucenter.model.dto.*;
 import com.kimo.ucenter.model.po.User;
@@ -77,7 +79,7 @@ public interface UserService extends IService<User> {
      * @param userQueryRequest
      * @return
      */
-    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest,HttpServletRequest request);
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest, HttpServletRequest request);
 
     long registration(UserAddRequest request, MultipartFile file) throws IOException;
 

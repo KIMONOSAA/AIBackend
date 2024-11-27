@@ -93,7 +93,7 @@ public class OrderController {
         //获得初始化的AlipayClient
         AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();//创建API对应的request
 //        alipayRequest.setReturnUrl("http://domain.com/CallBack/return_url.jsp");
-        alipayRequest.setNotifyUrl("uezczc.natappfree.cc/order/paynotify");//在公共参数中设置回跳和通知地址
+        alipayRequest.setNotifyUrl("qhbzp5.natappfree.cc/order/paynotify");//在公共参数中设置回跳和通知地址
         //tjxt-user-t.itheima.net
         // 创建一个 Map 用于存储业务参数
         Map<String, Object> bizContentMap = new HashMap<>();

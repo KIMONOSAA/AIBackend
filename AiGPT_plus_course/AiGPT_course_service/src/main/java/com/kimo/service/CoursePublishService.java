@@ -38,4 +38,11 @@ public interface CoursePublishService extends IService<CoursePublish> {
 
 
     CoursePublish getCoursePublish(Long courseId);
+
+    Boolean auditSuccess(Long courseId, HttpServletRequest request,Long managerId,String suggestion);
+
+    Boolean courseOffLine(Long courseId, Long managerId, HttpServletRequest request);
+
+    Boolean auditWrong(Long courseId, HttpServletRequest request, Long managerId,String suggestion);
+
 }

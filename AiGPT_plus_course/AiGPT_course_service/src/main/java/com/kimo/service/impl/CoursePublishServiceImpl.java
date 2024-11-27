@@ -93,15 +93,15 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     @Autowired
     private ExecutorService executorService;
 
+    @Autowired
+    private CourseAuditMapper courseAuditMapper;
+
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId, HttpServletRequest request, CourseLearnRecordDto courseLearnRecordDto) {
         //        //获取用户信息
 
         UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
-        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
-
-        courseBaseService.ensuperAdminOrAdmin(code,"900006");
 
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = userDtoForRedisOrLock.getId();
@@ -195,6 +195,7 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         String courseMarketJson = JSON.toJSONString(courseMarket);
         //将课程营销信息json数据放入课程预发布表
         coursePublishPre.setMarket(courseMarketJson);
+        coursePublishPre.setCourseId(courseId);
         //转json
         String teachplanTreeString = JSON.toJSONString(teachplanTree);
         coursePublishPre.setTeachplan(teachplanTreeString);
@@ -302,6 +303,148 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     public CoursePublish getCoursePublish(Long courseId){
         CoursePublish coursePublish = coursePublishMapper.selectById(courseId);
         return coursePublish ;
+    }
+
+    @Override
+    @Transactional
+    public Boolean auditSuccess(Long courseId, HttpServletRequest request,Long manager,String suggestion) {
+        UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
+
+        courseBaseService.ensuperAdminOrAdmin(code,"900006");
+
+
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+
+        ThrowUtils.throwIf(courseBase == null, ErrorCode.COURSE_AUDIT_IS_NOT_ERROR,"查无此课程");
+
+        if(!"202003".equals(courseBase.getAuditStatus())){
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR,"当前课程需要提交才能审核通过");
+        }
+
+        courseBase.setAuditStatus("202004");
+        courseBaseMapper.updateById(courseBase);
+        QueryWrapper<CoursePublishPre> coursePublishPreQueryWrapper = new QueryWrapper<>();
+        coursePublishPreQueryWrapper.eq("course_id", courseId);
+
+        coursePublishPreQueryWrapper.eq("manager_id", manager);
+
+        CoursePublishPre coursePublishPre = coursePublishPreMapper.selectOne(coursePublishPreQueryWrapper);
+
+        if(coursePublishPre == null){
+            throw new BusinessException(ErrorCode.COURSE_AUDIT_IS_NOT_ERROR,"预发布没有这个课程");
+        }
+
+        coursePublishPre.setStatus("202004");
+
+        coursePublishPreMapper.updateById(coursePublishPre);
+
+        return updatedCourseAudit(courseId, "202004", suggestion, manager);
+
+    }
+
+    private Boolean updatedCourseAudit(Long courseId, String auditStatus, String suggestion,Long managerId){
+        QueryWrapper<CourseAudit> courseAuditQueryWrapper = new QueryWrapper<>();
+        courseAuditQueryWrapper.eq("course_id", courseId);
+        courseAuditQueryWrapper.eq("manager_id", managerId);
+
+        CourseAudit courseAudit = courseAuditMapper.selectOne(courseAuditQueryWrapper);
+        if(courseAudit == null){
+            CourseAudit courseAudit1 = new CourseAudit();
+            courseAudit1.setCourseId(courseId);
+            courseAudit1.setManagerId(managerId);
+            courseAudit1.setStatus(auditStatus);
+            courseAudit1.setSuggestion(suggestion);
+            courseAudit1.setCreateTime(LocalDateTime.now());
+            courseAudit1.setUpdateTime(LocalDateTime.now());
+            int insert = courseAuditMapper.insert(courseAudit1);
+
+            return insert > 0;
+
+        }
+        courseAudit.setCourseId(courseId);
+        courseAudit.setManagerId(managerId);
+        courseAudit.setStatus(auditStatus);
+        courseAudit.setSuggestion(suggestion);
+        courseAudit.setCreateTime(LocalDateTime.now());
+        courseAudit.setUpdateTime(LocalDateTime.now());
+
+        courseAuditMapper.updateById(courseAudit);
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public Boolean courseOffLine(Long courseId, Long managerId, HttpServletRequest request) {
+        UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
+
+        courseBaseService.ensuperAdminOrAdmin(code,"900004");
+        ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
+        Long userId = userDtoForRedisOrLock.getId();
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        ThrowUtils.throwIf(courseBase == null,ErrorCode.COURSE_NOT_FOUND);
+
+        courseBase.setAuditStatus("202002");
+        courseBase.setStatus("203003");
+
+        courseBaseMapper.updateById(courseBase);
+        QueryWrapper<CoursePublishPre> coursePublishPreQueryWrapper = new QueryWrapper<>();
+        coursePublishPreQueryWrapper.eq("course_id", courseId);
+        coursePublishPreQueryWrapper.eq("manager_id", managerId);
+        CoursePublishPre coursePublishPre = coursePublishPreMapper.selectOne(coursePublishPreQueryWrapper);
+        if(coursePublishPre != null){
+            coursePublishPreMapper.deleteById(coursePublishPre.getId());
+        }
+
+
+        CoursePublish coursePublish = coursePublishMapper.selectById(courseId);
+        if(coursePublish != null){
+            coursePublishMapper.deleteById(coursePublish.getId());
+        }
+
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public Boolean auditWrong(Long courseId, HttpServletRequest request, Long managerId,String suggestion) {
+        UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = courseBaseService.getRoleForPermission(userDtoForRedisOrLock);
+
+        courseBaseService.ensuperAdminOrAdmin(code,"900006");
+
+
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+
+        ThrowUtils.throwIf(courseBase == null, ErrorCode.COURSE_AUDIT_IS_NOT_ERROR,"查无此课程");
+
+        if(!"202003".equals(courseBase.getAuditStatus())){
+            throw new BusinessException(ErrorCode.FORBIDDEN_ERROR,"当前课程需要提交才能审核通过");
+        }
+
+        courseBase.setAuditStatus("202001");
+        courseBaseMapper.updateById(courseBase);
+        QueryWrapper<CoursePublishPre> coursePublishPreQueryWrapper = new QueryWrapper<>();
+        coursePublishPreQueryWrapper.eq("course_id", courseId);
+
+        coursePublishPreQueryWrapper.eq("manager_id", managerId);
+
+        CoursePublishPre coursePublishPre = coursePublishPreMapper.selectOne(coursePublishPreQueryWrapper);
+
+        if(coursePublishPre == null){
+            throw new BusinessException(ErrorCode.COURSE_AUDIT_IS_NOT_ERROR,"预发布没有这个课程");
+        }
+
+
+        coursePublishPreMapper.deleteById(coursePublishPre);
+
+        return updatedCourseAudit(courseId, "202001", suggestion, managerId);
     }
 }
 

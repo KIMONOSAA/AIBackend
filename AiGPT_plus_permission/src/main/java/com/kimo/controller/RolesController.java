@@ -71,6 +71,19 @@ public class RolesController {
     }
 
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 12:39
+     * @return:
+     * @Param:
+     * @Description: 判断是否管理员
+     */
+    @PostMapping("/roles/isAdmin")
+    public BaseResponse<Boolean> getUserIsAdmin(HttpServletRequest request) {
+        Boolean admin = rolesService.getUserIsAdmin(request);
+        return ResultUtils.success(admin);
+    }
+
 
 
 }

@@ -37,7 +37,7 @@
         <result property="isPoint" column="is_point" jdbcType="TINYINT"/>
         <result property="isEnable" column="is_enable" jdbcType="TINYINT"/>
         <association property="roles" javaType="com.kimo.ucenter.model.po.Roles">
-            <id property="id" column="id" jdbcType="BIGINT"/>
+            <id property="id" column="roles_id" jdbcType="BIGINT"/> <!-- 使用新的别名 roles_id -->
             <result property="userId" column="user_id"/>
             <result property="rolesName" column="roles_name"/>
         </association>
@@ -74,11 +74,12 @@
             u.grade,
             u.is_enable,
             u.is_point,
-            r.id,
+            r.role_id AS roles_id,  -- 修改这里，给 roles 表的 id 列一个别名
             r.roles_name
         from user u
                  LEFT JOIN roles r ON u.id = r.user_id
         order by u.id
-        limit #{pageSize} offset #{offset}
+            limit #{pageSize} offset #{offset}
     </select>
+
 </mapper>

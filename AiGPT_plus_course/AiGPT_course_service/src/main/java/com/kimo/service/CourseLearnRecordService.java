@@ -17,4 +17,5 @@ public interface CourseLearnRecordService extends IService<CourseLearnRecord> {
 
     Wrapper<CourseLearnRecord> getQueryWrapper(QueryCourseParamsDto queryCourseParams, HttpServletRequest request);
 
+    CourseLearnRecord getCourseMyLearnByCourseId(HttpServletRequest request, Long courseId);
 }
