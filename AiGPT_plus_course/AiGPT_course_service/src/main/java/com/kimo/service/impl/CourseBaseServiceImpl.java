@@ -316,7 +316,7 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
 
     @Override
     public String getRoleForPermission(UserDto userDtoForRedisOrLock) {
-        Long roleId = userDtoForRedisOrLock.getRoleId();
+        Long roleId = userDtoForRedisOrLock.getId();
         Permissions userPermissions = permissionsClient.getUserPermissions(String.valueOf(roleId));
         String code = userPermissions.getCode();
         return code;
@@ -805,6 +805,8 @@ public class CourseBaseServiceImpl extends ServiceImpl<CourseBaseMapper, CourseB
         // 将键的有效期设置为0（已失效）
         redisTemplate.delete(caffeineCourseIdKey);
         redisTemplate.delete(caffeineCourseMarketKey);
+        commonCaffeine.invalidate(caffeineCourseIdKey);
+        commonCaffeine.invalidate(caffeineCourseMarketKey);
     }
 
     //保存课程营销信息

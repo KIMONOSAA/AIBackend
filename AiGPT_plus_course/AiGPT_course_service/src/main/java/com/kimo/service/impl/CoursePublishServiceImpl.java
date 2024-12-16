@@ -4,6 +4,7 @@ package com.kimo.service.impl;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.kimo.api.client.UserClient;
 import com.kimo.api.dto.UserDto;
 import com.kimo.common.ErrorCode;
@@ -96,11 +97,13 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     @Autowired
     private CourseAuditMapper courseAuditMapper;
 
+    @Autowired
+    Cache<String, Object> commonCaffeine;
+
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId, HttpServletRequest request, CourseLearnRecordDto courseLearnRecordDto) {
-        //        //获取用户信息
-
+       //获取用户信息
         UserDto userDtoForRedisOrLock = courseBaseService.getUserDtoForRedisOrLock(request, SecurityConstants.AUTHORIZATION_HEADER);
 
         ThrowUtils.throwIf(userDtoForRedisOrLock == null,ErrorCode.NOT_LOGIN_ERROR);
@@ -117,17 +120,16 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
         }
 
         String courseBroweseId = CourseConstant.COURSE_BROWSES + userId + courseBaseInfo.getId();
-//                //课程浏览加+1
+       //课程浏览加+1
         addCourseBrowses(courseBroweseId,userId,courseBaseInfo.getId());
 
-//        课程计划信息
+        // 课程计划信息
         List<TeachplanListDto> teachplanTreeRedis = courseBaseInfoService.findTeachplanTreeRedis(courseId);
 
         CoursePreviewDto coursePreviewDto = new CoursePreviewDto();
         coursePreviewDto.setCourseBase(courseBaseInfo);
         coursePreviewDto.setTeachplans(teachplanTreeRedis);
         return coursePreviewDto;
-
 
     }
 
@@ -263,6 +265,8 @@ public class CoursePublishServiceImpl extends ServiceImpl<CoursePublishMapper, C
     }
 
     private void deleteRedisCache(String caffeineCourseIdKey,String caffeineCourseMarketKey) {
+        commonCaffeine.invalidate(caffeineCourseIdKey);
+        commonCaffeine.invalidate(caffeineCourseMarketKey);
         redisTemplate.delete(caffeineCourseIdKey);
         redisTemplate.delete(caffeineCourseMarketKey);
     }

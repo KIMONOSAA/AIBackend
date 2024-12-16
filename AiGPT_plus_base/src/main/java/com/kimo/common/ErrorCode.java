@@ -56,6 +56,7 @@ public enum ErrorCode {
     ADD_PAYRECORD_ERROR(90004,"添加支付记录失败"),
     PAYRECORD_NOT_FOUND(90005,"支付记录不存在"),
     TRADING_NOT_FOUND(90006,"交易不存在"),
+    PAY_ERROR(90008,"支付失败"),
     POINT_IS_NOT(90007,"积分不足,请到其他渠道获取,才能与AI问答"),
     PERMISSION_NOT_FOUND(100001,"无权限"),
     PAID_SUCCESS_NO_NEED_TO_REPAY(90006,"已支付，无需重新支付"),

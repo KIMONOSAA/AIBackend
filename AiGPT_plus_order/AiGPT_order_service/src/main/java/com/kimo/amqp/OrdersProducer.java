@@ -55,8 +55,8 @@ public class OrdersProducer {
 //            String messageBody = new String(returnedMessage.getMessage().getBody(), StandardCharsets.UTF_8);
 //
 //            // 记录投递失败日志
-//            log.info("消息发送失败，应答码：{}，原因：{}，交换机：{}，路由键：{}，消息内容：{}",
-//                    replyCode, replyText, exchange, routingKey, messageBody);
+////            log.info("消息发送失败，应答码：{}，原因：{}，交换机：{}，路由键：{}，消息内容：{}",
+////                    replyCode, replyText, exchange, routingKey, messageBody);
 //
 //            // 将消息重新添加到消息表
 //            MqMessage mqMessage = JSON.parseObject(messageBody, MqMessage.class);

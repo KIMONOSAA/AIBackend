@@ -79,6 +79,16 @@ public class CommonConfig {
 
     }
 
+    //省略部分非核心代码
+    @Bean
+    @Scope("prototype")
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory){
+        RabbitTemplate rabbitTemplate= new RabbitTemplate();
+        rabbitTemplate.setConnectionFactory(connectionFactory);
+        rabbitTemplate.setMandatory(true);
+        return rabbitTemplate;
+    }
+
     /**
      * Direct 交换机
      */
@@ -153,5 +163,44 @@ public class CommonConfig {
     public Binding binding_course_publish_queue() {
         return BindingBuilder.bind(course_publish_queue()).to(paynotify_exchange_fanout());
     }
+
+
+    @Bean(ORDER_EXCHANGE)
+    public DirectExchange order_exchange() {
+        return new DirectExchange(ORDER_EXCHANGE,true,false);
+    }
+
+
+    @Bean(ORDER_QUEUE)
+    public Queue order_queue() {
+        return new Queue(ORDER_QUEUE,true,false,false);
+    }
+
+
+    @Bean
+    public Binding binding_order_queue() {
+        return BindingBuilder.bind(order_queue()).to(order_exchange()).with(ORDER_ROUTING_KEY);
+    }
+
+    @Bean(DEAD_LETTER_EXCHANGE)
+    public DirectExchange order_ttl_exchange() {
+        return new DirectExchange(DEAD_LETTER_EXCHANGE,true,false);
+    }
+
+    @Bean(DEAD_LETTER_QUEUE)
+    public Queue order_ttl_queue() {
+        return QueueBuilder.durable(DEAD_LETTER_QUEUE)
+                .withArgument("x-dead-letter-exchange",ORDER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key",ORDER_ROUTING_KEY)
+                .build();
+    }
+
+    @Bean
+    public Binding binding_dead_letter_queue() {
+        return BindingBuilder.bind(order_ttl_queue()).to(order_ttl_exchange()).with(DEAD_LETTER_ROUTING_KEY);
+    }
+
+
+
 
 }

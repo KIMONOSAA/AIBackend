@@ -13,10 +13,12 @@ import com.kimo.common.ErrorCode;
 import com.kimo.common.ResultUtils;
 import com.kimo.config.AlipayConfig;
 
+import com.kimo.exception.BusinessException;
 import com.kimo.exception.ThrowUtils;
 
 import com.kimo.model.dto.AddOrderDto;
 import com.kimo.model.dto.PayRecordDto;
+import com.kimo.model.dto.PayRecordRequestDto;
 import com.kimo.model.dto.PayStatusDto;
 
 import com.kimo.model.po.OrdersRecord;
@@ -58,7 +60,7 @@ public class OrderController {
     private ServletUtils servletUtils;
 
     /**
-     * 生成二维码
+     * 生成二维码并创建订单
      * @param addOrderDto
      * @param request
      * @return
@@ -74,6 +76,27 @@ public class OrderController {
         }
         return ResultUtils.success(order);
     }
+
+    /**
+     * @Author: Mr.kimo
+     * @Date: 10:01
+     * @return:
+     * @Param:
+     * @Description: 获取二维码
+     */
+    @PostMapping("/get/paycode")
+    public BaseResponse<PayRecordDto> getPayCode(@RequestBody PayRecordRequestDto payRecordDto, HttpServletRequest request){
+        PayRecordDto order = null;
+        try {
+            order = ordersService.getPayCodeForOrderId(payRecordDto,request);
+        } catch (Exception e) {
+            ResultUtils.error(ErrorCode.ORDER_ADD_NOT_ERROR);
+        }
+        return ResultUtils.success(order);
+    }
+
+
+
 
     /**
      * 扫码下单
@@ -92,9 +115,8 @@ public class OrderController {
         AlipayClient alipayClient = new DefaultAlipayClient(AlipayConfig.URL, APP_ID, APP_PRIVATE_KEY, AlipayConfig.FORMAT, AlipayConfig.CHARSET, ALIPAY_PUBLIC_KEY,AlipayConfig.SIGNTYPE);
         //获得初始化的AlipayClient
         AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();//创建API对应的request
-//        alipayRequest.setReturnUrl("http://domain.com/CallBack/return_url.jsp");
-        alipayRequest.setNotifyUrl("qhbzp5.natappfree.cc/order/paynotify");//在公共参数中设置回跳和通知地址
-        //tjxt-user-t.itheima.net
+
+        alipayRequest.setNotifyUrl("4xq6x7.natappfree.cc/order/paynotify");//在公共参数中设置回跳和通知地址
         // 创建一个 Map 用于存储业务参数
         Map<String, Object> bizContentMap = new HashMap<>();
         bizContentMap.put("out_trade_no", payNo);
@@ -107,12 +129,6 @@ public class OrderController {
 
         // 设置业务参数
         alipayRequest.setBizContent(bizContentJson);
-//        alipayRequest.setBizContent("{" +
-//                "    \"out_trade_no\":\""+payNo+"\"," +
-//                "    \"total_amount\":"+payRecordByPayno.getTotalPrice()+"," +
-//                "    \"subject\":\""+payRecordByPayno.getOrderName()+"\"," +
-//                "    \"product_code\":\"QUICK_WAP_WAY\"" +
-//                "  }");//填充业务参数
         String form = alipayClient.pageExecute(alipayRequest).getBody(); //调用SDK生成表单
         httpResponse.setContentType("text/html;charset=" + AlipayConfig.CHARSET);
         httpResponse.getWriter().write(form);//直接将完整的表单html输出到页面
@@ -144,9 +160,6 @@ public class OrderController {
     @PostMapping("/paynotify")
     public void paynotify(HttpServletRequest request) throws UnsupportedEncodingException, AlipayApiException {
 
-//        String username = servletUtils.getHeader(request, SecurityConstants.AUTHORIZATION_HEADER);
-//        UserDto userDto = userClient.GobalGetLoginUser(username);
-//        ThrowUtils.throwIf(userDto == null,ErrorCode.NOT_LOGIN_ERROR);
         Long userId = 0L;
         Map<String,String> params = new HashMap<String,String>();
         Map requestParams = request.getParameterMap();
@@ -190,6 +203,8 @@ public class OrderController {
                 //处理逻辑。。。
                 ordersService.saveAliPayStatus(payStatusDto,userId);
             }
+        }else {
+            throw new BusinessException(ErrorCode.PAY_ERROR,"支付失败");
         }
 
 

@@ -39,7 +39,9 @@ public class PermissionController {
     //获取roleid所拥有权限
     @PostMapping("/get/permission")
     public Permissions getUserPermissions(@RequestParam String roleId,HttpServletRequest request){
+
         Permissions permissionByRoleId = permissionsService.getPermissionByRoleId(roleId);
+
 //        String code = permissionByRoleId.getCode();
 //        servletUtils.ensuperAdminOrAdmin(code,"114514");
         UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
@@ -50,6 +52,25 @@ public class PermissionController {
         return permissionByRoleId;
 
     }
+
+    //获取roleid所拥有权限
+    @PostMapping("/get/permission/member")
+    public Permissions getUserPermissionsForMember(@RequestParam String roleId,HttpServletRequest request){
+
+        Permissions permissionByRoleId = permissionsService.getPermissionByRoleIdForMember(roleId);
+
+//        String code = permissionByRoleId.getCode();
+//        servletUtils.ensuperAdminOrAdmin(code,"114514");
+        UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
+
+        String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+        servletUtils.ensuperAdminOrAdmin(code,"114514");
+        return permissionByRoleId;
+
+    }
+
+
 
     //添加权限
     @PostMapping("/add/permission")

@@ -118,7 +118,6 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
 
         servletUtils.ensuperAdminOrAdmin(code,"114514");
 
-        UserDto userDto = getaBoolean(request);
         String codeJson = null;
         ArrayList<String> codeList = new ArrayList<>();
         QueryWrapper<Permissions> queryWrapper = new QueryWrapper<>();
@@ -215,10 +214,14 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
 
     @Override
     public Permissions getPermissionByRoleId(String roleId) {
+        QueryWrapper<Roles> queryWrapperRole = new QueryWrapper<>();
+        queryWrapperRole.eq("user_id", roleId);
+        Roles roles = rolesMapper.selectOne(queryWrapperRole);
+        Long roleId1 = roles.getRoleId();
+
         QueryWrapper<Permissions> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("role_id", roleId);
+        queryWrapper.eq("role_id", roleId1);
         Permissions permissions = permissionsMapper.selectOne(queryWrapper);
-        System.out.println(permissions);
         return permissions;
     }
 
@@ -244,6 +247,16 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
         permissions.setCode(code);
         int i = permissionsMapper.updateById(permissions);
         return i == 1;
+    }
+
+    @Override
+    public Permissions getPermissionByRoleIdForMember(String roleId) {
+
+            QueryWrapper<Permissions> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("role_id", roleId);
+            Permissions permissions = permissionsMapper.selectOne(queryWrapper);
+            return permissions;
+
     }
 }
 

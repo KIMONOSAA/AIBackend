@@ -146,7 +146,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         List<String> answerContents = new ArrayList<>();
 
         // 减去积分
-        aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
+        if(!"7433801236367556627".equals(botId)){
+            aiMessageSessionService.fetchUpdatePoint(PointNumber, Long.parseLong(userId));
+        }
 
         // 创建请求对象
         Object requestObject = createCompletionRequest(chartData, fileData, user, botId);
@@ -394,9 +396,9 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         // 2. 将用户 ID 添加回 loginUserInfo Map 中，确保其在后续处理中存在
         loginUserInfo.put("userId", userId);
 
-        // 3. 更新用户的积分（调用积分更新服务）
-        // 这一步可能是根据上传文件的处理行为来奖励用户积分
-        this.updateUserPoints(userId);
+//        // 3. 更新用户的积分（调用积分更新服务）
+//        // 这一步可能是根据上传文件的处理行为来奖励用户积分
+//        this.updateUserPoints(userId);
 
         // 4. 创建 CoZeConfiguration 配置对象
         // CoZeConfiguration 是与 CoZe API 交互的配置类

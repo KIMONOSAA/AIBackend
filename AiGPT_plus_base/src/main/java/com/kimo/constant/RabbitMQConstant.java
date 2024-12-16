@@ -1,5 +1,7 @@
 package com.kimo.constant;
 
+import javax.swing.plaf.PanelUI;
+
 /**
  * @author Mr.kimo
  */
@@ -35,10 +37,27 @@ public interface RabbitMQConstant {
 
     public static final long BI_MODEL_ID = 1659171950288818178L;
 
+
+    public static final String ORDER_EXCHANGE = "order_exchange";
+
+    public static final String ORDER_QUEUE = "order_queue";
+
+    public static final String ORDER_ROUTING_KEY = "order_create";
+
+    public static final String DEAD_LETTER_EXCHANGE = "order_ttl_exchange";
+    public static final String DEAD_LETTER_QUEUE = "order_ttl_queue";
+    public static final String DEAD_LETTER_ROUTING_KEY = "order_ttl_create";
+
+
+
     //交换机
     public static final String PAYNOTIFY_EXCHANGE_FANOUT = "paynotify_exchange_fanout";
     //支付结果通知消息类型
     public static final String MESSAGE_TYPE = "payresult_notify";
     //支付通知队列
     public static final String PAYNOTIFY_QUEUE = "paynotify_queue";
+
+
+
+
 }

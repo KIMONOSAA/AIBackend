@@ -11,6 +11,7 @@ import com.alipay.api.request.AlipayTradeQueryRequest;
 import com.alipay.api.response.AlipayTradeQueryResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kimo.amqp.OrderProducer;
 import com.kimo.amqp.OrdersProducer;
 import com.kimo.api.client.UserClient;
 import com.kimo.api.dto.UserDto;
@@ -27,6 +28,7 @@ import com.kimo.messagesdk.model.po.MqMessage;
 import com.kimo.messagesdk.service.MqMessageService;
 import com.kimo.model.dto.AddOrderDto;
 import com.kimo.model.dto.PayRecordDto;
+import com.kimo.model.dto.PayRecordRequestDto;
 import com.kimo.model.dto.PayStatusDto;
 
 import com.kimo.model.po.Orders;
@@ -86,6 +88,13 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     @Autowired
     private MqMessageService mqMessageService;
 
+    @Autowired
+    private OrderProducer  orderProducer;
+
+    @Autowired
+    @Lazy
+    private OrdersService currentProxyService;
+
 
     @Value("${pay.alipay.APP_ID}")
     String APP_ID;
@@ -108,7 +117,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         ThrowUtils.throwIf(userDto == null,ErrorCode.NOT_LOGIN_ERROR);
         Long id = userDto.getId();
         //插入订单表，详细表
-        Orders orders = saveOrders(id.toString(), addOrderDto);
+        Orders orders = currentProxyService.saveOrders(id.toString(), addOrderDto);
         
 
         //添加支付记录表
@@ -131,6 +140,9 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
         BeanUtils.copyProperties(payRecord,payRecordDto);
         payRecordDto.setQrcode(qrCode);
 
+        int delayTime = 30 * 60 * 1000;
+//        int delayTime = 30 * 1000;
+        orderProducer.sendMessage(orders,delayTime);
         return payRecordDto;
     }
 
@@ -202,6 +214,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     @Transactional
     public void saveAliPayStatus(PayStatusDto payStatusDto,Long userId){
 
+
         //支付记录号
         String outTradeNo = payStatusDto.getOut_trade_no();
         OrdersRecord payRecordByPayno = getPayRecordByPayno(outTradeNo);
@@ -248,6 +261,28 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders>
     @Override
     public void notifyPayResult(MqMessage message) {
         ordersProducer.sendMessage(message);
+    }
+
+    @Override
+    public PayRecordDto getPayCodeForOrderId(PayRecordRequestDto recordDto, HttpServletRequest request) {
+        ThrowUtils.throwIf(recordDto == null,ErrorCode.PAYRECORD_NOT_FOUND);
+        Long payRecordId = recordDto.getPayRecordId();
+        ThrowUtils.throwIf(payRecordId <= 0 ,ErrorCode.PAYRECORD_NOT_FOUND);
+        OrdersRecord ordersRecord = ordersRecordMapper.selectById(payRecordId);
+        PayRecordDto payRecordDto = new PayRecordDto();
+        BeanUtils.copyProperties(ordersRecord,payRecordDto);
+
+        String qrCode = null;
+        try {
+            //url要可以被模拟器访问到，url为下单接口(稍后定义)
+            String url = String.format(qrcodeUrl, ordersRecord.getPayNo());
+            qrCode = new QRCodeUtil().createQRCode(url, 200, 200);
+            payRecordDto.setQrcode(qrCode);
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.GENERATING_THE_QR_CODE_ERROR);
+        }
+
+        return payRecordDto;
     }
 
 

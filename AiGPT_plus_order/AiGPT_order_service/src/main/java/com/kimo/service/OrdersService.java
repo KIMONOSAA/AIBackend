@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.kimo.messagesdk.model.po.MqMessage;
 import com.kimo.model.dto.AddOrderDto;
 import com.kimo.model.dto.PayRecordDto;
+import com.kimo.model.dto.PayRecordRequestDto;
 import com.kimo.model.dto.PayStatusDto;
 import com.kimo.model.po.Orders;
 import com.kimo.model.po.OrdersRecord;
@@ -38,4 +39,8 @@ public interface OrdersService extends IService<Orders> {
      * @param message
      */
     public void notifyPayResult(MqMessage message);
+
+    PayRecordDto getPayCodeForOrderId(PayRecordRequestDto recordDto, HttpServletRequest request);
+
+    Orders saveOrders(String string, AddOrderDto addOrderDto);
 }

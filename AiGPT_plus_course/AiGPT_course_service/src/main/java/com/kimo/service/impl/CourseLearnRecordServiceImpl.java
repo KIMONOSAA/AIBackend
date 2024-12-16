@@ -220,7 +220,7 @@ public class CourseLearnRecordServiceImpl extends ServiceImpl<CourseLearnRecordM
         try {
            return courseLearnRecord = courseLearnRecordMapper.selectOne(queryWrapper);
         }catch (Exception e){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"错误的多个课程数据");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"错误的多个课程数据或用户暂无当前课程历史记录");
         }
     }
 }

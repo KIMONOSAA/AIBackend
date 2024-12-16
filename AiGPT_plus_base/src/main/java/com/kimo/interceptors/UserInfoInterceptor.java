@@ -20,8 +20,11 @@ public class UserInfoInterceptor implements HandlerInterceptor {
        //获取登录用户信息
         String userInfoToken = request.getHeader("authorization");
         String header = request.getHeader("X-GatewayTokenHeader");
-        if(StrUtil.isNotBlank(userInfoToken) && StrUtil.isNotBlank(header)){
+        if(StrUtil.isNotBlank(userInfoToken)){
             UseIdHolder.setUserForToken(userInfoToken);
+
+        }
+        if(StrUtil.isNotBlank(header)){
             HeaderHolder.setUserForToken(header);
         }
         //判断是否获取用户，有就存入ThreadLocal

@@ -19,6 +19,8 @@ public interface UserMapper extends BaseMapper<User> {
     User findByEmail(String username);
     List<UserListDto> getUserForRolesNodeById(@Param("pageSize") int pageSize,
                                               @Param("offset") int offset);
+
+    long getTotalCountForRolesNode();
 }
 
 

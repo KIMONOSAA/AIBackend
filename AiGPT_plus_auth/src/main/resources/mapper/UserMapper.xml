@@ -82,4 +82,7 @@
             limit #{pageSize} offset #{offset}
     </select>
 
+    <select id="getTotalCountForRolesNode" resultType="long">
+        SELECT COUNT(*) FROM user
+    </select>
 </mapper>

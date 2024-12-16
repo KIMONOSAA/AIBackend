@@ -94,7 +94,7 @@ public class RolesServiceImpl extends ServiceImpl<RolesMapper, Roles>
         ThrowUtils.throwIf(userFromCacheOrDb == null,ErrorCode.ADD_DATABASE_ERROR);
         ArrayList<String> strings = new ArrayList<String>();
         String rolseJson = null;
-        permissionsUtils.ensureSuperAdmin(userFromCacheOrDb);
+//        permissionsUtils.ensureSuperAdmin(userFromCacheOrDb);
         QueryWrapper<Roles> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", role.getUserId());
         Roles roles1 = rolesMapper.selectOne(queryWrapper);

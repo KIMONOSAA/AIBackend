@@ -346,9 +346,9 @@ public class UserController {
      * @Description: 分页获取用户以及角色
      */
     @PostMapping("/list/user/roles/page")
-    public BaseResponse<List<UserListDto>> listUserForRolesByPage(@RequestBody PageRequest pageRequest,
+    public BaseResponse<PageResponse<UserListDto>> listUserForRolesByPage(@RequestBody PageRequest pageRequest,
                                                            HttpServletRequest request) {
-        List<UserListDto> userPage = userService.listUserForRolesByPage(pageRequest,request);
+        PageResponse<UserListDto> userPage = userService.listUserForRolesByPage(pageRequest,request);
         return ResultUtils.success(userPage);
     }
 
@@ -368,5 +368,16 @@ public class UserController {
         return pointService.addPoint(userId);
     }
 
+    /**
+     * @Author: Mr.kimo
+     * @Date: 23:21
+     * @return:
+     * @Param:
+     * @Description: 删除缓存
+     */
+    @PostMapping("/delete/user/header/for/redis")
+    public BaseResponse<Boolean> deleteUserHeaderForRedis(HttpServletRequest request){
+        return userService.deleteUserHeaderForRedis(request);
+    }
 
 }

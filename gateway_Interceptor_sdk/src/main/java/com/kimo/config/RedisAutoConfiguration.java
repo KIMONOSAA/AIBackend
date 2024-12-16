@@ -1,5 +1,6 @@
 package com.kimo.config;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
@@ -28,6 +29,16 @@ public class RedisAutoConfiguration {
 //    @Bean
 //    public CloudInterceptorConfigure cloudSecurityInterceptorConfigure() {
 //        return new CloudInterceptorConfigure();
+//    }
+
+//    @PostConstruct
+//    public void checkRedisTemplateExistence() {
+//        try {
+//            Class.forName("org.springframework.data.redis.core.RedisTemplate");
+//            System.out.println("RedisTemplate is present in the classpath.");
+//        } catch (ClassNotFoundException e) {
+//            System.out.println("RedisTemplate is NOT present in the classpath.");
+//        }
 //    }
 
 

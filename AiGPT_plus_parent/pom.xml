@@ -13,6 +13,26 @@
     <artifactId>AiGPT_plus_parent</artifactId>
 
 
+<!--    <modules>-->
+<!--        <module>../AiGPT_plus_auth</module>-->
+<!--        <module>../AiGPT_plus_gateway</module>-->
+<!--        <module>../AiGPT_plus_permission</module>-->
+<!--        <module>../AiGPT_plus_practice</module>-->
+<!--        <module>../xueban-api</module>-->
+<!--        <module>../AiGPT_jwt</module>-->
+<!--        <module>../AiGPT_plus_base</module>-->
+<!--        <module>../AiGPT_plus_chart</module>-->
+<!--        <module>../AiGPT_plus_checkcode</module>-->
+<!--        <module>../AiGPT_plus_course</module>-->
+<!--        <module>../AiGPT_plus_coze</module>-->
+<!--        <module>../AiGPT_plus_data_dictionary</module>-->
+<!--        <module>../AiGPT_plus_media</module>-->
+<!--        <module>../AiGPT_plus_message_sdk</module>-->
+<!--        <module>../AiGPT_plus_order</module>-->
+<!--        <module>../gateway_Interceptor_sdk</module>-->
+<!--    </modules>-->
+
+
     <properties>
         <!-- Spring Boot -->
         <spring.boot.version>3.0.13</spring.boot.version>
@@ -82,10 +102,75 @@
 
         <spring.cloud.security>2.2.5.RELEASE</spring.cloud.security>
         <media.minio>8.4.3</media.minio>
+
+
+        <caffeine.version>3.1.8</caffeine.version>
+
+        <javax.servlet.version>4.0.1</javax.servlet.version>
+
+        <knife4j-gateway.version>4.4.0</knife4j-gateway.version>
+
+        <knife4j-openapi3.version>4.4.0</knife4j-openapi3.version>
+
+        <springfox-swagger2.version>2.9.2</springfox-swagger2.version>
+
+        <knife4j-spring-boot.version>3.0.3</knife4j-spring-boot.version>
+
+        <springfox-swagger-ui.version>2.9.2</springfox-swagger-ui.version>
+
+        <swagger-bootstrap-ui.version>1.8.9</swagger-bootstrap-ui.version>
+
+        <fastjson.version>1.2.83</fastjson.version>
     </properties>
 
     <dependencyManagement>
     <dependencies>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version> <!-- 请根据需要选择合适的版本 -->
+        </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>swagger-bootstrap-ui</artifactId>
+            <version>${swagger-bootstrap-ui.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${springfox-swagger-ui.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-spring-boot-starter</artifactId>
+            <version>${knife4j-spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>${springfox-swagger2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <version>${knife4j-openapi3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-gateway-spring-boot-starter</artifactId>
+            <version>${knife4j-gateway.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${caffeine.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet.version}</version> <!-- 或者选择合适的版本 -->
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
@@ -228,23 +313,23 @@
             <version>${amqp.client.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-devtools</artifactId>-->
+<!--            <scope>runtime</scope>-->
+<!--            <optional>true</optional>-->
+<!--        </dependency>-->
         <!--分布式任务调度-->
         <dependency>
             <groupId>com.xuxueli</groupId>
             <artifactId>xxl-job-core</artifactId>
             <version>${xxl-job-core.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>junit</groupId>
@@ -293,32 +378,32 @@
     </dependencies>
 
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${org.projectlombok.version}</version>
-                        </exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+<!--    <build>-->
+<!--        <plugins>-->
+<!--            <plugin>-->
+<!--                <groupId>org.springframework.boot</groupId>-->
+<!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--                <configuration>-->
+<!--                    <excludes>-->
+<!--                        <exclude>-->
+<!--                            <groupId>org.projectlombok</groupId>-->
+<!--                            <artifactId>lombok</artifactId>-->
+<!--                            <version>${org.projectlombok.version}</version>-->
+<!--                        </exclude>-->
+<!--                    </excludes>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-compiler-plugin</artifactId>-->
+<!--                <version>3.8.1</version>-->
+<!--                <configuration>-->
+<!--                    <source>17</source>-->
+<!--                    <target>17</target>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+<!--        </plugins>-->
+<!--    </build>-->
 
 
 </project>

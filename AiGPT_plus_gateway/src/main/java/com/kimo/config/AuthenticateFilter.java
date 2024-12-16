@@ -90,7 +90,7 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
 //            return chain.filter(exchange);
 //        }
 
-        if(requestUrl.contains("/checkcode/checkcode/publish") || requestUrl.contains("/auth/auth/publish") || requestUrl.contains("/auth/auth/verificationEmail") || requestUrl.contains("/auth/auth/authentication") || requestUrl.contains("/auth/auth/register")){
+        if(requestUrl.contains("/checkcode/checkcode/publish") || requestUrl.contains("/auth/auth/publish") || requestUrl.contains("/auth/auth/verificationEmail") || requestUrl.contains("/auth/auth/authentication") || requestUrl.contains("/auth/auth/register") ){
             return chain.filter(exchange);
         }
         if(requestUrl.contains("/order") || requestUrl.contains("/auth/auth/gobalget/login")){
@@ -99,7 +99,7 @@ public class AuthenticateFilter implements GlobalFilter, Ordered {
         if(isPv(rawPath)){
             return unauthorizedResponse(exchange, serverHttpResponse);
         }
-        if(requestUrl.contains("/chart/v3/api-docs") || requestUrl.contains("/permission/v3/api-docs") || requestUrl.contains("/practice/v3/api-docs") || requestUrl.contains("/course/v3/api-docs")|| requestUrl.contains("/auth/v3/api-docs")){
+        if(requestUrl.contains("/chart/v3/api-docs") || requestUrl.contains("/permission/v3/api-docs") || requestUrl.contains("/practice/v3/api-docs") || requestUrl.contains("/course/v3/api-docs")|| requestUrl.contains("/auth/v3/api-docs") || requestUrl.contains("/order/v3/api-docs")){
             return chain.filter(exchange);
         }
 

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import com.kimo.api.dto.UserDto;
+import com.kimo.common.BaseResponse;
 import com.kimo.common.DeleteRequest;
 import com.kimo.common.PageRequest;
 
@@ -98,7 +99,7 @@ public interface UserService extends IService<User> {
 
     UserDto GobalGetLoginUser(String request);
 
-    List<UserListDto> listUserForRolesByPage(PageRequest pageRequest, HttpServletRequest request);
+    PageResponse<UserListDto> listUserForRolesByPage(PageRequest pageRequest, HttpServletRequest request);
 
     Long createUser(UserAddRequest userAddRequest, HttpServletRequest request);
 
@@ -107,4 +108,6 @@ public interface UserService extends IService<User> {
     Boolean updateUser(UserUpdateRequest userUpdateRequest, HttpServletRequest request);
 
     User getUserById(long id, HttpServletRequest request);
+
+    BaseResponse<Boolean> deleteUserHeaderForRedis(HttpServletRequest request);
 }

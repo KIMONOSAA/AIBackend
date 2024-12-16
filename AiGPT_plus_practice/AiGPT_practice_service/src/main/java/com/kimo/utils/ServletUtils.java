@@ -48,7 +48,7 @@ public class ServletUtils
 
 
     public String getRoleForPermission(com.kimo.api.dto.UserDto userDtoForRedisOrLock) {
-        Long roleId = userDtoForRedisOrLock.getRoleId();
+        Long roleId = userDtoForRedisOrLock.getId();
         Permissions userPermissions = permissionsClient.getUserPermissions(String.valueOf(roleId));
         String code = userPermissions.getCode();
         return code;

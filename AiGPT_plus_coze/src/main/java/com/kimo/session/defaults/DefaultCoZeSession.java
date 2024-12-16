@@ -89,7 +89,7 @@ public class DefaultCoZeSession implements CoZeSession {
         Assert.isTrue(cozeCompletionRequest.getStream(), "illegal parameter stream is false!");
 
         if (!StringUtils.isNotBlank(apiHostByUser)){
-            apiHostByUser = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
+            apiHostByUser = "pat_Qm4PfNyLr5sdCv9YUJuMDbU0SBeB2Jeg7DllUODtqjiamIMP95FQcmJ9Yh3udGaW";
         }
         // 1. 先判断用户传递的 Host、Key 是否为空，为空则使用默认配置信息
         // 动态设置 Host、Key，便于用户传递自己的信息
@@ -127,7 +127,7 @@ public class DefaultCoZeSession implements CoZeSession {
         Assert.isTrue(cozeCompletionRequest.getStream(), "illegal parameter stream is false!");
 
         if (!StringUtils.isNotBlank(apiHostByUser)){
-            apiHostByUser = "pat_7gwklsLnL5KGDMGecF6IuLazLWBNDqwyELV7nGUGrD215fi1D2yjWSKkzSSiVijO";
+            apiHostByUser = "pat_Qm4PfNyLr5sdCv9YUJuMDbU0SBeB2Jeg7DllUODtqjiamIMP95FQcmJ9Yh3udGaW";
         }
         // 1. 先判断用户传递的 Host、Key 是否为空，为空则使用默认配置信息
         // 动态设置 Host、Key，便于用户传递自己的信息
@@ -162,7 +162,7 @@ public class DefaultCoZeSession implements CoZeSession {
         // 1. 创建 OkHttpClient 实例
         OkHttpClient client = OkHttpClientProvider.getClient();
         if (!StringUtils.isNotBlank(apiHostByUser)){
-            apiHostByUser = "pat_M6W3gFhKK9qwkj6IceAhBS29nSKarYfoWd1C6iDtUOD0Knv2nYXoMxs72TNrJ55Y";
+            apiHostByUser = "pat_Qm4PfNyLr5sdCv9YUJuMDbU0SBeB2Jeg7DllUODtqjiamIMP95FQcmJ9Yh3udGaW";
         }
         // 1. 先判断用户传递的 Host、Key 是否为空，为空则使用默认配置信息
         // 动态设置 Host、Key，便于用户传递自己的信息

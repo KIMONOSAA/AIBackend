@@ -49,4 +49,7 @@ public interface PermissionsService extends IService<Permissions> {
     Permissions getPermissionByRoleId(String roleId);
 
     Boolean deletedPermissionForOne(Long permissionId, String roleCode, HttpServletRequest request);
+
+    Permissions getPermissionByRoleIdForMember(String roleId);
+
 }

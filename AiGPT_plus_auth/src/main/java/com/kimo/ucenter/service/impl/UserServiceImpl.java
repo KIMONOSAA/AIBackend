@@ -6,8 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kimo.api.client.CheckCodeClient;
 import com.kimo.api.dto.UserDto;
-import com.kimo.common.DeleteRequest;
-import com.kimo.common.PageRequest;
+import com.kimo.common.*;
 import com.kimo.constant.SecurityConstants;
 import com.kimo.constant.SqlConstants;
 import com.kimo.exception.ThrowUtils;
@@ -18,7 +17,6 @@ import com.kimo.ucenter.model.dto.*;
 import com.kimo.ucenter.model.po.*;
 
 import com.kimo.utils.*;
-import com.kimo.common.ErrorCode;
 import com.kimo.constant.CommonConstant;
 import com.kimo.constant.UserConstant;
 import com.kimo.exception.BusinessException;
@@ -53,6 +51,7 @@ import static com.kimo.constans.PointConstant.VIP_MEMBER_CODE;
 import static com.kimo.constans.UserConstant.AUTHORIZATION;
 import static com.kimo.constans.UserConstant.BEARER;
 import static com.kimo.constant.CaffeineConstant.CAFFEINE_USER;
+import static com.kimo.constant.SecurityConstants.LOGIN_TYPE;
 import static com.kimo.utils.CommonUtils.checkIfNull;
 
 
@@ -128,6 +127,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 用户的更新点
         updateUserPoints(user.getId().toString(), 1000L);
+
+
 
 //        // 创建并保存用户角色
 //        Roles role = createAndSaveRole(user.getId(), "VIP");
@@ -743,16 +744,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<UserListDto> listUserForRolesByPage(PageRequest pageRequest, HttpServletRequest request) {
+    public PageResponse<UserListDto> listUserForRolesByPage(PageRequest pageRequest, HttpServletRequest request) {
         UserDto headerRedisForUser = servletUtils.getHeaderRedisForUser(request, SecurityConstants.AUTHORIZATION_HEADER);
 
         String code = servletUtils.getRoleForPermission(headerRedisForUser);
+
+
+        long total = userMapper.getTotalCountForRolesNode();
 
         servletUtils.ensuperAdminOrAdmin(code,"3000002");
         int pageSize = pageRequest.getPageSize();
         int current = pageRequest.getCurrent();
         int offset = (current - 1) * pageSize;
-        return userMapper.getUserForRolesNodeById(pageSize, offset);
+        List<UserListDto> userForRolesNodeById = userMapper.getUserForRolesNodeById(pageSize, offset);
+
+        // 封装并返回分页结果
+        PageResponse<UserListDto> response = new PageResponse<>();
+        response.setTotal(total);
+        response.setList(userForRolesNodeById);
+
+        return response;
+
     }
 
     @Override
@@ -821,6 +833,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = this.getById(id);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
         return user;
+    }
+
+    @Override
+    public BaseResponse<Boolean> deleteUserHeaderForRedis(HttpServletRequest request) {
+        String beaner = servletUtils.getHeaderKey(request, SecurityConstants.AUTHORIZATION_HEADER);
+        String userKeyForRedis = CAFFEINE_USER + beaner;
+        Boolean delete = redisTemplate.delete(userKeyForRedis);
+        return ResultUtils.success(delete);
     }
 
 

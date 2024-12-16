@@ -15,11 +15,14 @@ import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.amqp.core.Message;
 import java.io.IOException;
 
+import static com.kimo.constant.CaffeineConstant.CAFFEINE_USER;
 import static com.kimo.constant.RabbitMQConstant.PAYNOTIFY_QUEUE;
 import static com.kimo.constant.RedisConstant.ORDERS_USER_KEY;
 
@@ -37,6 +40,9 @@ public class OrderOrUserConsumer {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    @Qualifier("redisTemplate")
+    private RedisTemplate<String,String> redisTemplate;
 
     @Autowired
     private RedissonClient redissonClient;
@@ -55,11 +61,14 @@ public class OrderOrUserConsumer {
         String MemberType = mqMessage.getBusinessKey2();
         //用户id
         String userId = mqMessage.getBusinessKey3();
+
+
         RLock lock = redissonClient.getLock(ORDERS_USER_KEY + userId);
         lock.lock();
         try {
             //根据消息内容，跟新个人记录和积分
             boolean b = userService.saveUserStatusSuccess(MemberId, MemberType, userId);
+
             channel.basicAck(deliveryTag,false);
         }catch (Exception e){
             log.error(e.getMessage());
@@ -67,6 +76,8 @@ public class OrderOrUserConsumer {
         }finally {
             lock.unlock();
         }
+
+
     }
 
 
